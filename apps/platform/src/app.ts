@@ -39,7 +39,7 @@ export async function createApp() {
   const env = getEnv();
   const db = createDbClient(env.DATABASE_URL);
 
-  migrate(db, { migrationsFolder });
+  await migrate(db, { migrationsFolder });
   await seedAdmin(db);
 
   // Seed default settings
