@@ -16,6 +16,12 @@ export function createMcpHandler(db: DbClient) {
     const description = mcpContext.neteaseAccount
       ? `Authenticated as ${mcpContext.neteaseAccount.nickname} (UID: ${mcpContext.neteaseAccount.neteaseUid}).`
       : "No NetEase account bound. Tools that require login (user info, likes, personal FM, etc.) will return an error.";
+    const toolGuidance = [
+      "Use netease_search for keyword discovery before detail tools when IDs are not known.",
+      "Use detail tools only when the required NetEase ID is known.",
+      "Prefer read-only tools unless the user explicitly requests a change.",
+      "Use netease_like only when the user explicitly asks to like or unlike a song.",
+    ].join(" ");
 
     const server = new McpServer(
       {
@@ -27,7 +33,7 @@ export function createMcpHandler(db: DbClient) {
           tools: {},
           logging: {},
         },
-        instructions: `MCP server for NetEase Cloud Music. ${description}`,
+        instructions: `MCP server for NetEase Cloud Music. ${description} ${toolGuidance}`,
       },
     );
 
