@@ -51,6 +51,25 @@ export function registerAllTools(
   );
 
   server.registerTool(
+    "netease_search_legacy",
+    {
+      description: "Use when the user wants the upstream NetEase search endpoint directly, including additional types such as video or voice search.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        keywords: z.string().min(1).max(100).describe("Search keywords"),
+        type: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Search type, such as 1=song, 10=album, 100=artist, 1000=playlist, 1014=video, 2000=voice"),
+        limit: z.number().int().min(1).max(100).default(30),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ keywords, type, limit, offset }) =>
+      call("netease_search_legacy", () => ncm.call("search", { keywords, type, limit, offset })),
+  );
+
+  server.registerTool(
     "netease_search_suggest",
     {
       description: "Use when the user wants autocomplete suggestions or likely matches for a search keyword.",
@@ -76,6 +95,41 @@ export function registerAllTools(
     },
     async ({ keywords, type }) =>
       call("netease_search_multimatch", () => ncm.call("search_multimatch", { keywords, type })),
+  );
+
+  server.registerTool(
+    "netease_search_match",
+    {
+      description: "Use when the user wants to match a local audio file's metadata to NetEase music information.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        title: z.string().default("").describe("Track title"),
+        album: z.string().default("").describe("Album name"),
+        artist: z.string().default("").describe("Artist name"),
+        duration: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Optional duration in milliseconds"),
+        md5: z.string().optional().describe("Optional local file MD5 or persist identifier"),
+      },
+    },
+    async ({ title, album, artist, duration, md5 }) =>
+      call("netease_search_match", () =>
+        ncm.call("search_match", { title, album, artist, duration, md5 }),
+      ),
+  );
+
+  server.registerTool(
+    "netease_search_suggest_pc",
+    {
+      description: "Use when the user wants PC-side search suggestions from NetEase.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        keyword: z.string().min(1).max(100).describe("Search keyword"),
+      },
+    },
+    async ({ keyword }) =>
+      call("netease_search_suggest_pc", () => ncm.call("search_suggest_pc", { keyword })),
   );
 
   server.registerTool(
@@ -857,6 +911,83 @@ export function registerAllTools(
     },
     async ({ time, limit }) =>
       call("netease_playlist_mylike", () => ncm.call("playlist_mylike", { time, limit })),
+  );
+
+  server.registerTool(
+    "netease_playlist_import_name_task_create",
+    {
+      description: "Use only when the user explicitly asks to import a playlist from text, links, or local metadata. This creates an import task on the bound NetEase account.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        importStarPlaylist: z.boolean().optional().describe("Whether to import liked songs"),
+        playlistName: z.string().optional().describe("Playlist name for text or link import"),
+        text: z.string().optional().describe("Raw text content to import"),
+        link: z
+          .string()
+          .optional()
+          .describe("JSON string array of links to import, for example '[\"https://...\"]'"),
+        local: z
+          .string()
+          .optional()
+          .describe("JSON string array of local metadata objects with name, artist, and album"),
+      },
+    },
+    async ({ importStarPlaylist, playlistName, text, link, local }) =>
+      call("netease_playlist_import_name_task_create", () =>
+        ncm.call("playlist_import_name_task_create", {
+          importStarPlaylist,
+          playlistName,
+          text,
+          link,
+          local,
+        }),
+      ),
+  );
+
+  server.registerTool(
+    "netease_playlist_import_task_status",
+    {
+      description: "Use when an import task ID is known and the user wants playlist import task status.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Playlist import task ID"),
+      },
+    },
+    async ({ id }) =>
+      call("netease_playlist_import_task_status", () =>
+        ncm.call("playlist_import_task_status", { id }),
+      ),
+  );
+
+  server.registerTool(
+    "netease_playlist_order_update",
+    {
+      description: "Use only when the user explicitly asks to reorder playlists. This changes playlist ordering on the bound NetEase account.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        ids: z
+          .string()
+          .min(1)
+          .describe("Comma-separated playlist IDs in the desired order"),
+      },
+    },
+    async ({ ids }) =>
+      call("netease_playlist_order_update", () => ncm.call("playlist_order_update", { ids })),
+  );
+
+  server.registerTool(
+    "netease_playlist_update_playcount",
+    {
+      description: "Use only when the user explicitly asks to update or check in playlist playcount behavior. This triggers a playlist playcount update on the bound NetEase account.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+      },
+    },
+    async ({ id }) =>
+      call("netease_playlist_update_playcount", () =>
+        ncm.call("playlist_update_playcount", { id }),
+      ),
   );
 
   // ── Top Playlists ──
