@@ -12,7 +12,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import { useNavigate } from "react-router-dom";
 
-const mcpUrl = `http://${window.location.hostname}:3001/mcp`;
+const mcpUrl = `${window.location.origin}/mcp`;
 
 function CodeBlock({ code }: { code: string }) {
   return (

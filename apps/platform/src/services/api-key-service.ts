@@ -8,7 +8,7 @@ export async function listApiKeys(db: DbClient, userId: string) {
   const keys = await db
     .select()
     .from(apiKeys)
-    .where(eq(apiKeys.userId, userId))
+    .where(and(eq(apiKeys.userId, userId), eq(apiKeys.isActive, true)))
     .orderBy(desc(apiKeys.createdAt));
 
   return keys.map((k) => ({
