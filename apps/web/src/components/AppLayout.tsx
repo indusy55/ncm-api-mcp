@@ -1,15 +1,13 @@
-import { Layout, Menu, Button, Typography, Spin } from "antd";
-import {
-  DashboardOutlined,
-  UserOutlined,
-  KeyOutlined,
-  LogoutOutlined,
-} from "@ant-design/icons";
+import { Box, Drawer, AppBar, Toolbar, Typography, Button, List, ListItem, ListItemButton, ListItemIcon, ListItemText, CircularProgress } from "@mui/material";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import PersonIcon from "@mui/icons-material/Person";
+import KeyIcon from "@mui/icons-material/Key";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
+import LogoutIcon from "@mui/icons-material/Logout";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.js";
 
-const { Sider, Content, Header } = Layout;
-const { Text } = Typography;
+const DRAWER_WIDTH = 200;
 
 export default function AppLayout() {
   const { user, loading, logout } = useAuth();
@@ -18,9 +16,9 @@ export default function AppLayout() {
 
   if (loading) {
     return (
-      <div style={{ textAlign: "center", padding: 48 }}>
-        <Spin size="large" />
-      </div>
+      <Box sx={{ textAlign: "center", py: 6 }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
@@ -30,71 +28,61 @@ export default function AppLayout() {
   }
 
   const menuItems = [
-    {
-      key: "/",
-      icon: <DashboardOutlined />,
-      label: "Dashboard",
-    },
-    {
-      key: "/account/bind",
-      icon: <UserOutlined />,
-      label: "NetEase Account",
-    },
-    {
-      key: "/account/keys",
-      icon: <KeyOutlined />,
-      label: "API Keys",
-    },
+    { key: "/", label: "控制台", icon: <DashboardIcon /> },
+    { key: "/account/bind", label: "网易云账号", icon: <PersonIcon /> },
+    { key: "/account/keys", label: "API 密钥", icon: <KeyIcon /> },
+    { key: "/mcp-setup", label: "MCP 配置", icon: <MenuBookIcon /> },
   ];
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
-      <Sider collapsible>
-        <div
-          style={{
-            color: "white",
-            padding: 16,
-            textAlign: "center",
-            fontWeight: "bold",
-            fontSize: 16,
-          }}
-        >
+    <Box sx={{ display: "flex", height: "100vh" }}>
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: DRAWER_WIDTH,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": { width: DRAWER_WIDTH },
+        }}
+      >
+        <Box sx={{ height: 64, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 18 }}>
           NCM MCP
-        </div>
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={[location.pathname]}
-          items={menuItems}
-          onClick={({ key }) => navigate(key)}
-        />
-      </Sider>
-      <Layout>
-        <Header
-          style={{
-            background: "#fff",
-            padding: "0 24px",
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            borderBottom: "1px solid #f0f0f0",
-          }}
-        >
-          <Text style={{ marginRight: 16 }}>{user.displayName}</Text>
-          <Button
-            icon={<LogoutOutlined />}
-            onClick={() => {
-              logout();
-              navigate("/login");
-            }}
-          >
-            Logout
-          </Button>
-        </Header>
-        <Content style={{ margin: 24 }}>
+        </Box>
+        <List>
+          {menuItems.map((item) => (
+            <ListItem key={item.key} disablePadding>
+              <ListItemButton
+                selected={location.pathname === item.key}
+                onClick={() => navigate(item.key)}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText primary={item.label} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+      </Drawer>
+      <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
+        <AppBar position="static" color="default" elevation={1}>
+          <Toolbar sx={{ justifyContent: "flex-end" }}>
+            <Typography sx={{ mr: 2 }}>{user.displayName}</Typography>
+            <Button
+              variant="text"
+              startIcon={<LogoutIcon />}
+              onClick={() => {
+                logout();
+                navigate("/login");
+              }}
+            >
+              退出登录
+            </Button>
+          </Toolbar>
+        </AppBar>
+        <Box sx={{ flexGrow: 1, p: 3, overflow: "auto" }}>
           <Outlet />
-        </Content>
-      </Layout>
-    </Layout>
+        </Box>
+      </Box>
+    </Box>
   );
 }

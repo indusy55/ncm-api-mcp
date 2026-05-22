@@ -1,81 +1,82 @@
-import { Form, Input, Button, Card, Typography, message } from "antd";
-import { MailOutlined, LockOutlined, UserOutlined } from "@ant-design/icons";
+import { Box, Card, TextField, Button, Typography, Alert, Snackbar } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.js";
 import { useState } from "react";
-
-const { Title } = Typography;
 
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  const onFinish = async (values: {
-    email: string;
-    password: string;
-    displayName: string;
-  }) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
+    setError(null);
     try {
-      await register(values.email, values.password, values.displayName);
-      message.success("Registration successful");
-      navigate("/");
+      await register(email, password, displayName);
+      setSuccess(true);
+      setTimeout(() => navigate("/"), 1000);
     } catch (err: any) {
-      message.error(err.response?.data?.error || "Registration failed");
+      setError(err.response?.data?.error || "注册失败");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "#f0f2f5",
-      }}
-    >
-      <Card style={{ width: 400 }}>
-        <Title level={3} style={{ textAlign: "center" }}>
-          Create Account
-        </Title>
-        <Form layout="vertical" onFinish={onFinish}>
-          <Form.Item
-            name="displayName"
-            label="Display Name"
-            rules={[{ required: true }]}
-          >
-            <Input prefix={<UserOutlined />} placeholder="Display Name" />
-          </Form.Item>
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={[{ required: true, type: "email" }]}
-          >
-            <Input prefix={<MailOutlined />} placeholder="Email" />
-          </Form.Item>
-          <Form.Item
-            name="password"
-            label="Password"
-            rules={[
-              { required: true, min: 8, message: "At least 8 characters" },
-            ]}
-          >
-            <Input.Password prefix={<LockOutlined />} placeholder="Password" />
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" block loading={loading}>
-              Register
-            </Button>
-          </Form.Item>
-        </Form>
-        <div style={{ textAlign: "center" }}>
-          Already have an account? <Link to="/login">Login</Link>
-        </div>
+    <Box sx={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
+      <Card sx={{ width: 400, p: 3 }}>
+        <Typography variant="h5" sx={{ textAlign: "center", mb: 3, fontWeight: 600 }}>
+          创建账号
+        </Typography>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <TextField
+            label="显示名称"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            required
+            fullWidth
+            size="small"
+          />
+          <TextField
+            label="邮箱"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            fullWidth
+            size="small"
+          />
+          <TextField
+            label="密码"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            fullWidth
+            size="small"
+            helperText="至少 8 个字符"
+            slotProps={{ htmlInput: { minLength: 8 } }}
+          />
+          <Button type="submit" variant="contained" fullWidth disabled={loading}>
+            {loading ? "注册中..." : "注册"}
+          </Button>
+        </Box>
+        <Typography sx={{ textAlign: "center", mt: 2, color: "text.secondary", fontSize: 14 }}>
+          已有账号？<Link to="/login">登录</Link>
+        </Typography>
       </Card>
-    </div>
+      <Snackbar open={!!error} autoHideDuration={4000} onClose={() => setError(null)}>
+        <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>
+      </Snackbar>
+      <Snackbar open={success} autoHideDuration={2000}>
+        <Alert severity="success">注册成功</Alert>
+      </Snackbar>
+    </Box>
   );
 }

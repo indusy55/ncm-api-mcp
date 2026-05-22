@@ -43,7 +43,7 @@ type QrPollState = "waiting" | "scanned" | "confirmed" | "expired";
 
 export function useQrPolling(onConfirmed: () => void) {
   const [key, setKey] = useState<string | null>(null);
-  const [qrImage, setQrImage] = useState<string | null>(null);
+  const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [pollState, setPollState] = useState<QrPollState | null>(null);
   const [qrNickname, setQrNickname] = useState<string | null>(null);
 
@@ -54,13 +54,10 @@ export function useQrPolling(onConfirmed: () => void) {
     setKey(qrKey);
     setPollState("waiting");
 
-    // Step 2: Get QR image
-    const imgRes = await api.post<{ qrimg: string }>("/netease/qr-image", {
-      key: qrKey,
-    });
-    setQrImage(imgRes.data.qrimg);
+    // Construct QR URL directly (skip qr-image API call)
+    setQrUrl(`https://music.163.com/login?codekey=${qrKey}`);
 
-    // Step 3: Start polling
+    // Step 2: Start polling
     const poll = async () => {
       try {
         const statusRes = await api.get<{
@@ -100,10 +97,10 @@ export function useQrPolling(onConfirmed: () => void) {
 
   const reset = useCallback(() => {
     setKey(null);
-    setQrImage(null);
+    setQrUrl(null);
     setPollState(null);
     setQrNickname(null);
   }, []);
 
-  return { key, qrImage, pollState, qrNickname, startQrFlow, reset };
+  return { key, qrUrl, pollState, qrNickname, startQrFlow, reset };
 }

@@ -1,16 +1,12 @@
-import { Card, Button, Typography, Tag, Spin, Row, Col, Space } from "antd";
-import {
-  UserOutlined,
-  KeyOutlined,
-  LinkOutlined,
-  DisconnectOutlined,
-  CheckCircleOutlined,
-  ExclamationCircleOutlined,
-} from "@ant-design/icons";
+import { Box, Card, Button, Typography, Chip, CircularProgress, Grid, CardActions, CardContent } from "@mui/material";
+import PersonIcon from "@mui/icons-material/Person";
+import KeyIcon from "@mui/icons-material/Key";
+import LinkIcon from "@mui/icons-material/Link";
+import LinkOffIcon from "@mui/icons-material/LinkOff";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorIcon from "@mui/icons-material/Error";
 import { useNavigate } from "react-router-dom";
 import { useNeteaseAccount } from "../hooks/useNeteaseAccount.js";
-
-const { Title, Text } = Typography;
 
 export default function Dashboard() {
   const { status, account, refresh } = useNeteaseAccount();
@@ -18,111 +14,92 @@ export default function Dashboard() {
 
   if (status === "loading") {
     return (
-      <div style={{ textAlign: "center", padding: 48 }}>
-        <Spin size="large" />
-      </div>
+      <Box sx={{ textAlign: "center", py: 6 }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   return (
-    <div>
-      <Title level={4}>Dashboard</Title>
+    <Box>
+      <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>控制台</Typography>
 
-      <Row gutter={[16, 16]}>
+      <Grid container spacing={2}>
         {/* NetEase Account Status */}
-        <Col xs={24} md={12}>
-          <Card
-            title={
-              <Space>
-                <UserOutlined />
-                NetEase Account
-              </Space>
-            }
-            actions={
-              status === "none"
-                ? [
-                    <Button
-                      type="primary"
-                      icon={<LinkOutlined />}
-                      onClick={() => navigate("/account/bind")}
-                    >
-                      Bind Account
-                    </Button>,
-                  ]
-                : [
-                    <Button
-                      icon={<DisconnectOutlined />}
-                      onClick={async () => {
-                        // Import api directly for unbind
-                        const api = (await import("../api/client.js")).default;
-                        await api.delete("/netease/unbind");
-                        refresh();
-                      }}
-                    >
-                      Unbind
-                    </Button>,
-                  ]
-            }
-          >
-            {status === "none" && (
-              <Text type="secondary">
-                No NetEase account bound yet. Click to bind.
-              </Text>
-            )}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card variant="outlined">
+            <CardContent>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+                <PersonIcon color="primary" />
+                <Typography variant="h6">网易云账号</Typography>
+              </Box>
 
-            {status === "bound" && account && (
-              <Space direction="vertical">
-                <Space>
-                  <Text strong>{account.nickname}</Text>
-                  <Tag color="green" icon={<CheckCircleOutlined />}>
-                    Active
-                  </Tag>
-                </Space>
-                <Text type="secondary">UID: {account.neteaseUid}</Text>
-              </Space>
-            )}
+              {status === "none" && (
+                <Typography color="text.secondary" sx={{ fontSize: 14 }}>
+                  尚未绑定网易云账号，点击绑定
+                </Typography>
+              )}
 
-            {status === "expired" && account && (
-              <Space direction="vertical">
-                <Space>
-                  <Text strong>{account.nickname}</Text>
-                  <Tag color="red" icon={<ExclamationCircleOutlined />}>
-                    Cookie Expired
-                  </Tag>
-                </Space>
-                <Text type="secondary">
-                  Please re-bind your account to continue using MCP tools.
-                </Text>
-              </Space>
-            )}
+              {status === "bound" && account && (
+                <Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                    <Typography sx={{ fontWeight: 600 }}>{account.nickname}</Typography>
+                    <Chip label="正常" color="success" size="small" icon={<CheckCircleIcon />} />
+                  </Box>
+                  <Typography color="text.secondary" sx={{ fontSize: 14 }}>UID: {account.neteaseUid}</Typography>
+                </Box>
+              )}
+
+              {status === "expired" && account && (
+                <Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                    <Typography sx={{ fontWeight: 600 }}>{account.nickname}</Typography>
+                    <Chip label="Cookie 已过期" color="error" size="small" icon={<ErrorIcon />} />
+                  </Box>
+                  <Typography color="text.secondary" sx={{ fontSize: 14 }}>
+                    请重新绑定账号以继续使用 MCP 工具
+                  </Typography>
+                </Box>
+              )}
+            </CardContent>
+            <CardActions sx={{ px: 2, pb: 2 }}>
+              {status === "none" ? (
+                <Button variant="contained" startIcon={<LinkIcon />} onClick={() => navigate("/account/bind")}>
+                  绑定账号
+                </Button>
+              ) : (
+                <Button variant="outlined" color="error" startIcon={<LinkOffIcon />} onClick={async () => {
+                  const api = (await import("../api/client.js")).default;
+                  await api.delete("/netease/unbind");
+                  refresh();
+                }}>
+                  解绑
+                </Button>
+              )}
+            </CardActions>
           </Card>
-        </Col>
+        </Grid>
 
         {/* API Key Summary */}
-        <Col xs={24} md={12}>
-          <Card
-            title={
-              <Space>
-                <KeyOutlined />
-                API Keys
-              </Space>
-            }
-            actions={[
-              <Button
-                type="primary"
-                icon={<KeyOutlined />}
-                onClick={() => navigate("/account/keys")}
-              >
-                Manage Keys
-              </Button>,
-            ]}
-          >
-            <Text type="secondary">
-              Manage your API keys for MCP server authentication.
-            </Text>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card variant="outlined">
+            <CardContent>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+                <KeyIcon color="primary" />
+                <Typography variant="h6">API 密钥</Typography>
+              </Box>
+              <Typography color="text.secondary" sx={{ fontSize: 14 }}>
+                管理你的 API 密钥，用于 MCP 服务器认证
+              </Typography>
+            </CardContent>
+            <CardActions sx={{ px: 2, pb: 2 }}>
+              <Button variant="contained" startIcon={<KeyIcon />} onClick={() => navigate("/account/keys")}>
+                管理密钥
+              </Button>
+            </CardActions>
           </Card>
-        </Col>
-      </Row>
-    </div>
+        </Grid>
+      </Grid>
+    </Box>
   );
 }

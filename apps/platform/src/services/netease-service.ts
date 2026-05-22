@@ -11,12 +11,12 @@ const ncm = require("@neteasecloudmusicapienhanced/api");
 
 export async function createQrKey(): Promise<string> {
   const res = await ncm.login_qr_key({});
-  return res.body.unikey;
+  return res.body.data.unikey;
 }
 
 export async function createQrImage(key: string): Promise<string> {
   const res = await ncm.login_qr_create({ key, qrimg: true });
-  return res.body.qrimg;
+  return res.body.data.qrimg;
 }
 
 export async function checkQrStatus(

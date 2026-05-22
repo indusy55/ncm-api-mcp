@@ -1,9 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
-import { Table, Button, Modal, Input, Typography, message, Tag, Space, Alert } from "antd";
-import { KeyOutlined, PlusOutlined, CopyOutlined } from "@ant-design/icons";
+import {
+  Box, Button, Typography, Chip, CircularProgress,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Paper, Dialog, DialogTitle, DialogContent, DialogActions,
+  TextField, Snackbar, Alert,
+} from "@mui/material";
+import KeyIcon from "@mui/icons-material/Key";
+import AddIcon from "@mui/icons-material/Add";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import api from "../api/client.js";
-
-const { Title, Text, Paragraph } = Typography;
 
 interface ApiKey {
   id: string;
@@ -15,6 +20,12 @@ interface ApiKey {
   createdAt: string;
 }
 
+interface SnackbarState {
+  open: boolean;
+  message: string;
+  severity: "success" | "error" | "warning";
+}
+
 export default function ApiKeys() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +35,18 @@ export default function ApiKeys() {
     name: string;
   } | null>(null);
   const [newKeyName, setNewKeyName] = useState("");
+  const [snackbar, setSnackbar] = useState<SnackbarState>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  const showSnackbar = (
+    severity: SnackbarState["severity"],
+    message: string
+  ) => {
+    setSnackbar({ open: true, severity, message });
+  };
 
   const fetchKeys = useCallback(async () => {
     setLoading(true);
@@ -31,7 +54,7 @@ export default function ApiKeys() {
       const res = await api.get<{ keys: ApiKey[] }>("/keys");
       setKeys(res.data.keys);
     } catch {
-      message.error("Failed to fetch API keys");
+      showSnackbar("error", "获取 API 密钥失败");
     } finally {
       setLoading(false);
     }
@@ -43,7 +66,7 @@ export default function ApiKeys() {
 
   const handleCreate = async () => {
     if (!newKeyName.trim()) {
-      message.warning("Please enter a name");
+      showSnackbar("warning", "请输入名称");
       return;
     }
     try {
@@ -53,154 +76,196 @@ export default function ApiKeys() {
       setNewKeyName("");
       fetchKeys();
     } catch (err: any) {
-      message.error(err.response?.data?.error || "Failed to create key");
+      showSnackbar("error", err.response?.data?.error || "创建密钥失败");
     }
   };
 
   const handleRevoke = async (id: string) => {
     try {
       await api.delete(`/keys/${id}`);
-      message.success("Key revoked");
+      showSnackbar("success", "密钥已撤销");
       fetchKeys();
     } catch (err: any) {
-      message.error(err.response?.data?.error || "Failed to revoke key");
+      showSnackbar("error", err.response?.data?.error || "撤销密钥失败");
     }
   };
 
-  const columns = [
-    {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
-    },
-    {
-      title: "Key",
-      dataIndex: "keyPrefix",
-      key: "keyPrefix",
-      render: (prefix: string) => <Text code>{prefix}...</Text>,
-    },
-    {
-      title: "Status",
-      dataIndex: "isActive",
-      key: "isActive",
-      render: (active: boolean) =>
-        active ? (
-          <Tag color="green">Active</Tag>
-        ) : (
-          <Tag color="red">Revoked</Tag>
-        ),
-    },
-    {
-      title: "Last Used",
-      dataIndex: "lastUsedAt",
-      key: "lastUsedAt",
-      render: (val: string | null) => (val ? new Date(val).toLocaleString() : "Never"),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_: unknown, record: ApiKey) => (
-        <Space>
-          {record.isActive && (
-            <Button
-              danger
-              size="small"
-              onClick={() => handleRevoke(record.id)}
-            >
-              Revoke
-            </Button>
-          )}
-        </Space>
-      ),
-    },
-  ];
-
   return (
-    <div>
-      <div
-        style={{
+    <Box>
+      <Box
+        sx={{
           display: "flex",
           justifyContent: "space-between",
-          marginBottom: 16,
+          alignItems: "center",
+          mb: 2,
         }}
       >
-        <Title level={4}>
-          <KeyOutlined /> API Keys
-        </Title>
+        <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <KeyIcon /> API 密钥
+        </Typography>
         <Button
-          type="primary"
-          icon={<PlusOutlined />}
+          variant="contained"
+          startIcon={<AddIcon />}
           onClick={() => setCreateOpen(true)}
         >
-          Create API Key
+          创建密钥
         </Button>
-      </div>
+      </Box>
 
-      <Table
-        dataSource={keys}
-        columns={columns}
-        rowKey="id"
-        loading={loading}
-        pagination={false}
-      />
+      {loading ? (
+        <Box sx={{ textAlign: "center", py: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <TableContainer component={Paper} variant="outlined">
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>名称</TableCell>
+                <TableCell>密钥</TableCell>
+                <TableCell>状态</TableCell>
+                <TableCell>最后使用</TableCell>
+                <TableCell>操作</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {keys.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                    暂无 API 密钥
+                  </TableCell>
+                </TableRow>
+              ) : (
+                keys.map((key) => (
+                  <TableRow key={key.id}>
+                    <TableCell>{key.name}</TableCell>
+                    <TableCell>
+                      <Typography
+                        component="code"
+                        sx={{ fontFamily: "monospace", fontSize: 13, bgcolor: "grey.100", px: 0.5, py: 0.25, borderRadius: 0.5 }}
+                      >
+                        {key.keyPrefix}...
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={key.isActive ? "已启用" : "已撤销"}
+                        color={key.isActive ? "success" : "error"}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {key.lastUsedAt
+                          ? new Date(key.lastUsedAt).toLocaleString()
+                          : "从未使用"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {key.isActive && (
+                        <Button
+                          color="error"
+                          size="small"
+                          variant="outlined"
+                          onClick={() => handleRevoke(key.id)}
+                        >
+                          撤销
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
-      <Modal
-        title="Create API Key"
-        open={createOpen}
-        onOk={handleCreate}
-        onCancel={() => setCreateOpen(false)}
-        okText="Create"
-      >
-        <Input
-          placeholder="Key name (e.g., My Claude Config)"
-          value={newKeyName}
-          onChange={(e) => setNewKeyName(e.target.value)}
-        />
-      </Modal>
+      {/* Create Key Dialog */}
+      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>创建 API 密钥</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            size="small"
+            placeholder="密钥名称（如：我的 Claude 配置）"
+            value={newKeyName}
+            onChange={(e) => setNewKeyName(e.target.value)}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateOpen(false)}>取消</Button>
+          <Button variant="contained" onClick={handleCreate}>
+            创建
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      <Modal
-        title="API Key Created"
+      {/* New Key Result Dialog */}
+      <Dialog
         open={!!newKeyResult}
-        onCancel={() => setNewKeyResult(null)}
-        footer={
+        onClose={() => setNewKeyResult(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>API 密钥已创建</DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            该密钥仅显示一次，请立即复制！
+          </Alert>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            <strong>Name:</strong> {newKeyResult?.name}
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            <strong>Key:</strong>
+          </Typography>
+          <Box
+            sx={{
+              bgcolor: "grey.100",
+              p: 1.5,
+              borderRadius: 1,
+              fontFamily: "monospace",
+              fontSize: 13,
+              wordBreak: "break-all",
+            }}
+          >
+            {newKeyResult?.fullKey}
+          </Box>
+        </DialogContent>
+        <DialogActions>
           <Button
-            type="primary"
+            variant="contained"
+            startIcon={<ContentCopyIcon />}
             onClick={() => {
               if (newKeyResult) {
                 navigator.clipboard.writeText(newKeyResult.fullKey);
-                message.success("Copied to clipboard");
+                showSnackbar("success", "已复制到剪贴板");
               }
             }}
-            icon={<CopyOutlined />}
           >
-            Copy Key
+            复制密钥
           </Button>
-        }
+          <Button onClick={() => setNewKeyResult(null)}>关闭</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert
-          type="warning"
-          showIcon
-          message="This key will only be shown once. Copy it now!"
-          style={{ marginBottom: 16 }}
-        />
-        <Paragraph>
-          <Text strong>Name:</Text> {newKeyResult?.name}
-        </Paragraph>
-        <Paragraph>
-          <Text strong>Key:</Text>
-        </Paragraph>
-        <div
-          style={{
-            background: "#f5f5f5",
-            padding: 12,
-            borderRadius: 6,
-            fontFamily: "monospace",
-            wordBreak: "break-all",
-          }}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          severity={snackbar.severity}
+          variant="filled"
         >
-          {newKeyResult?.fullKey}
-        </div>
-      </Modal>
-    </div>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 }
