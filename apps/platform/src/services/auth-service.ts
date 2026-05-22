@@ -24,8 +24,15 @@ export async function registerUser(
   env: Env,
   input: { email: string; password: string; username: string },
 ): Promise<AuthResult> {
+  const existingAdmin = await db
+    .select()
+    .from(users)
+    .where(eq(users.role, "admin"))
+    .get();
+  const role = existingAdmin ? "user" : "admin";
+
   const allowRegistration = await getSetting(db, "allow_registration");
-  if (allowRegistration !== "true") {
+  if (role !== "admin" && allowRegistration !== "true") {
     throw new AppError(403, "Registration is disabled");
   }
 
@@ -55,6 +62,7 @@ export async function registerUser(
     email: input.email,
     passwordHash,
     username: input.username,
+    role,
   });
 
   const user = await db
