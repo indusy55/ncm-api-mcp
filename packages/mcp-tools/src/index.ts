@@ -1222,7 +1222,8 @@ export function registerAllTools(
         id: z.union([z.number(), z.string()]).describe("Album ID"),
       },
     },
-    async ({ id }) => call("netease_album_detail_dynamic", () => ncm.call("album_detail", { id })),
+    async ({ id }) =>
+      call("netease_album_detail_dynamic", () => ncm.call("album_detail_dynamic", { id })),
   );
 
   server.registerTool(
@@ -1264,6 +1265,84 @@ export function registerAllTools(
       inputSchema: {},
     },
     async () => call("netease_album_newest", () => ncm.call("album_newest")),
+  );
+
+  server.registerTool(
+    "netease_album_list_style",
+    {
+      description: "Use when the user wants digital album lists by language or style area.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        area: z.enum(["Z_H", "E_A", "KR", "JP"]).default("Z_H"),
+        limit: z.number().int().min(1).max(100).default(10),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ area, limit, offset }) =>
+      call("netease_album_list_style", () => ncm.call("album_list_style", { area, limit, offset })),
+  );
+
+  server.registerTool(
+    "netease_album_privilege",
+    {
+      description: "Use when an album ID is known and the user wants album song audio quality or privilege information.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Album ID"),
+      },
+    },
+    async ({ id }) => call("netease_album_privilege", () => ncm.call("album_privilege", { id })),
+  );
+
+  server.registerTool(
+    "netease_album_songsaleboard",
+    {
+      description: "Use when the user wants digital album or digital single sales rankings.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        albumType: z
+          .enum(["0", "1"])
+          .default("0")
+          .describe("0=digital album, 1=digital single"),
+        type: z.enum(["daily", "week", "year", "total"]).default("daily"),
+        year: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Required when type is year"),
+      },
+    },
+    async ({ albumType, type, year }) =>
+      call("netease_album_songsaleboard", () =>
+        ncm.call("album_songsaleboard", { albumType, type, year }),
+      ),
+  );
+
+  server.registerTool(
+    "netease_album_sublist",
+    {
+      description: "Use when the user wants the bound NetEase account's subscribed albums. Requires a bound NetEase account.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        limit: z.number().int().min(1).max(100).default(25),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ limit, offset }) =>
+      call("netease_album_sublist", () => ncm.call("album_sublist", { limit, offset })),
+  );
+
+  server.registerTool(
+    "netease_album_sub",
+    {
+      description: "Use only when the user explicitly asks to subscribe or unsubscribe an album. This changes saved albums on the bound NetEase account.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Album ID"),
+        subscribe: z.boolean().default(true).describe("true=subscribe, false=unsubscribe"),
+      },
+    },
+    async ({ id, subscribe }) =>
+      call("netease_album_sub", () => ncm.call("album_sub", { id, t: subscribe ? 1 : 0 })),
   );
 
   // ── Artist Info ──
@@ -1347,6 +1426,75 @@ export function registerAllTools(
       },
     },
     async ({ id }) => call("netease_simi_artist", () => ncm.call("simi_artist", { id })),
+  );
+
+  server.registerTool(
+    "netease_artist_detail_dynamic",
+    {
+      description: "Use when an artist ID is known and the user wants dynamic artist data such as counts and interaction stats.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Artist ID"),
+      },
+    },
+    async ({ id }) =>
+      call("netease_artist_detail_dynamic", () => ncm.call("artist_detail_dynamic", { id })),
+  );
+
+  server.registerTool(
+    "netease_artist_fans",
+    {
+      description: "Use when an artist ID is known and the user wants fans of that artist.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Artist ID"),
+        limit: z.number().int().min(1).max(100).default(20),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ id, limit, offset }) =>
+      call("netease_artist_fans", () => ncm.call("artist_fans", { id, limit, offset })),
+  );
+
+  server.registerTool(
+    "netease_artist_follow_count",
+    {
+      description: "Use when an artist ID is known and the user wants that artist's follower count.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Artist ID"),
+      },
+    },
+    async ({ id }) =>
+      call("netease_artist_follow_count", () => ncm.call("artist_follow_count", { id })),
+  );
+
+  server.registerTool(
+    "netease_artist_sublist",
+    {
+      description: "Use when the user wants the bound NetEase account's followed artists. Requires a bound NetEase account.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        limit: z.number().int().min(1).max(100).default(25),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ limit, offset }) =>
+      call("netease_artist_sublist", () => ncm.call("artist_sublist", { limit, offset })),
+  );
+
+  server.registerTool(
+    "netease_artist_sub",
+    {
+      description: "Use only when the user explicitly asks to follow or unfollow an artist. This changes followed artists on the bound NetEase account.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Artist ID"),
+        subscribe: z.boolean().default(true).describe("true=follow, false=unfollow"),
+      },
+    },
+    async ({ id, subscribe }) =>
+      call("netease_artist_sub", () => ncm.call("artist_sub", { id, t: subscribe ? 1 : 0 })),
   );
 
   server.registerTool(
