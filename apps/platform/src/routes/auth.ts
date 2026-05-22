@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { setCookie, getCookie, deleteCookie } from "hono/cookie";
 import { z } from "zod";
 import type { DbClient } from "@ncm/database";
@@ -16,7 +17,7 @@ import {
 
 const REFRESH_COOKIE = "refreshToken";
 
-function setRefreshCookie(c: ReturnType<typeof Hono.prototype.route>, token: string) {
+function setRefreshCookie(c: Context, token: string) {
   setCookie(c, REFRESH_COOKIE, token, {
     httpOnly: true,
     secure: true,
@@ -26,7 +27,7 @@ function setRefreshCookie(c: ReturnType<typeof Hono.prototype.route>, token: str
   });
 }
 
-function clearRefreshCookie(c: ReturnType<typeof Hono.prototype.route>) {
+function clearRefreshCookie(c: Context) {
   deleteCookie(c, REFRESH_COOKIE, { path: "/api/auth" });
 }
 

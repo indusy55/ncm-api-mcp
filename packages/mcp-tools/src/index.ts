@@ -786,6 +786,18 @@ export function registerAllTools(
   );
 
   server.registerTool(
+    "netease_top_list",
+    {
+      description: "Use when a ranking board ID is known and the user wants that specific chart detail.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Ranking board ID"),
+      },
+    },
+    async ({ id }) => call("netease_top_list", () => ncm.call("top_list", { id })),
+  );
+
+  server.registerTool(
     "netease_top_artists",
     {
       description: "Use when the user wants current popular artists ranking.",
@@ -841,6 +853,48 @@ export function registerAllTools(
       },
     },
     async ({ mvid }) => call("netease_mv_detail", () => ncm.call("mv_detail", { mvid })),
+  );
+
+  server.registerTool(
+    "netease_mv_detail_info",
+    {
+      description: "Use when an MV ID is known and the user wants supplementary MV detail information such as interaction stats.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        mvid: z.union([z.number(), z.string()]).describe("MV ID"),
+      },
+    },
+    async ({ mvid }) => call("netease_mv_detail_info", () => ncm.call("mv_detail_info", { mvid })),
+  );
+
+  server.registerTool(
+    "netease_mv_first",
+    {
+      description: "Use when the user wants the latest MVs by region.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        area: z.enum(["全部", "内地", "港台", "欧美", "韩国", "日本"]).default("全部"),
+        limit: z
+          .union([z.number().int(), z.string()])
+          .default(20)
+          .describe("Result limit"),
+      },
+    },
+    async ({ area, limit }) => call("netease_mv_first", () => ncm.call("mv_first", { area, limit })),
+  );
+
+  server.registerTool(
+    "netease_mv_exclusive_rcmd",
+    {
+      description: "Use when the user wants exclusive MV recommendations.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        limit: z.number().int().min(1).max(100).default(20),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ limit, offset }) =>
+      call("netease_mv_exclusive_rcmd", () => ncm.call("mv_exclusive_rcmd", { limit, offset })),
   );
 
   server.registerTool(
@@ -1017,6 +1071,32 @@ export function registerAllTools(
       call("netease_album_new", () => ncm.call("album_new", { area, limit, offset })),
   );
 
+  server.registerTool(
+    "netease_album_list",
+    {
+      description: "Use when the user wants to browse albums by area and order type.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        area: z.enum(["ALL", "ZH", "EA", "KR", "JP"]).default("ALL"),
+        type: z.string().default("hot").describe("Album list type, such as hot or new"),
+        limit: z.number().int().min(1).max(100).default(20),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ area, type, limit, offset }) =>
+      call("netease_album_list", () => ncm.call("album_list", { area, type, limit, offset })),
+  );
+
+  server.registerTool(
+    "netease_album_newest",
+    {
+      description: "Use when the user wants the newest album releases.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {},
+    },
+    async () => call("netease_album_newest", () => ncm.call("album_newest")),
+  );
+
   // ── Artist Info ──
   server.registerTool(
     "netease_artist_info",
@@ -1100,6 +1180,105 @@ export function registerAllTools(
     async ({ id }) => call("netease_simi_artist", () => ncm.call("simi_artist", { id })),
   );
 
+  server.registerTool(
+    "netease_artist_list",
+    {
+      description: "Use when the user wants to discover artists by region, gender or band type, and optional initial letter.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        area: z.enum(["-1", "7", "96", "8", "16", "0"]).default("-1"),
+        initial: z
+          .string()
+          .min(1)
+          .max(1)
+          .optional()
+          .describe("Optional initial letter A-Z or a-z"),
+        type: z.enum(["1", "2", "3"]).optional().describe("1=male, 2=female, 3=band"),
+        limit: z.number().int().min(1).max(100).default(30),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ area, initial, type, limit, offset }) =>
+      call("netease_artist_list", () => ncm.call("artist_list", { area, initial, type, limit, offset })),
+  );
+
+  server.registerTool(
+    "netease_artist_top_song",
+    {
+      description: "Use when an artist ID is known and the user wants that artist's top songs.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Artist ID"),
+      },
+    },
+    async ({ id }) => call("netease_artist_top_song", () => ncm.call("artist_top_song", { id })),
+  );
+
+  server.registerTool(
+    "netease_artist_new_song",
+    {
+      description: "Use when the user wants newly released songs from artists.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        limit: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Optional result limit"),
+        startTimestamp: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Optional pagination timestamp"),
+      },
+    },
+    async ({ limit, startTimestamp }) =>
+      call("netease_artist_new_song", () => ncm.call("artist_new_song", { limit, startTimestamp })),
+  );
+
+  server.registerTool(
+    "netease_artist_new_mv",
+    {
+      description: "Use when the user wants newly released MVs from artists.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        limit: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Optional result limit"),
+        startTimestamp: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Optional pagination timestamp"),
+      },
+    },
+    async ({ limit, startTimestamp }) =>
+      call("netease_artist_new_mv", () => ncm.call("artist_new_mv", { limit, startTimestamp })),
+  );
+
+  server.registerTool(
+    "netease_artist_video",
+    {
+      description: "Use when an artist ID is known and the user wants related videos for that artist.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Artist ID"),
+        size: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Optional page size"),
+        cursor: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Optional pagination cursor"),
+        order: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Optional upstream order flag"),
+      },
+    },
+    async ({ id, size, cursor, order }) =>
+      call("netease_artist_video", () => ncm.call("artist_video", { id, size, cursor, order })),
+  );
+
   // ── Personal FM ──
   server.registerTool(
     "netease_personal_fm",
@@ -1173,6 +1352,18 @@ export function registerAllTools(
     async ({ id }) => call("netease_related_allvideo", () => ncm.call("related_allvideo", { id })),
   );
 
+  server.registerTool(
+    "netease_related_playlist",
+    {
+      description: "Use when a song, album, artist, or related resource ID is known and the user wants related playlists.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Related resource ID"),
+      },
+    },
+    async ({ id }) => call("netease_related_playlist", () => ncm.call("related_playlist", { id })),
+  );
+
   // ── Banner ──
   server.registerTool(
     "netease_banner",
@@ -1197,6 +1388,18 @@ export function registerAllTools(
   );
 
   server.registerTool(
+    "netease_video_detail_info",
+    {
+      description: "Use when a video ID is known and the user wants supplementary video detail information.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        vid: z.string().min(1).describe("Video ID"),
+      },
+    },
+    async ({ vid }) => call("netease_video_detail_info", () => ncm.call("video_detail_info", { vid })),
+  );
+
+  server.registerTool(
     "netease_video_url",
     {
       description: "Use when a video ID is known and the user wants a playable video URL.",
@@ -1206,6 +1409,20 @@ export function registerAllTools(
       },
     },
     async ({ id }) => call("netease_video_url", () => ncm.call("video_url", { id })),
+  );
+
+  server.registerTool(
+    "netease_video_category_list",
+    {
+      description: "Use when the user wants available video categories with pagination support.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        limit: z.number().int().min(1).max(100).default(50),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ limit, offset }) =>
+      call("netease_video_category_list", () => ncm.call("video_category_list", { limit, offset })),
   );
 
   server.registerTool(
@@ -1266,6 +1483,16 @@ export function registerAllTools(
       call("netease_video_timeline_recommend", () =>
         ncm.call("video_timeline_recommend", { offset }),
       ),
+  );
+
+  server.registerTool(
+    "netease_playlist_video_recent",
+    {
+      description: "Use when the user wants recently played or recent playlist-associated videos for the bound NetEase account. Requires a bound NetEase account.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {},
+    },
+    async () => call("netease_playlist_video_recent", () => ncm.call("playlist_video_recent")),
   );
 
   // ── Playlist Comments ──
