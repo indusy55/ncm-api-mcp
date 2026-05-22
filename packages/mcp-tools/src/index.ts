@@ -393,6 +393,139 @@ export function registerAllTools(
       ),
   );
 
+  server.registerTool(
+    "netease_playlist_create",
+    {
+      description: "Use only when the user explicitly asks to create a playlist. This creates a new playlist on the bound NetEase account.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        name: z.string().min(1).max(200).describe("Playlist name"),
+        privacy: z
+          .enum(["0", "10"])
+          .default("0")
+          .describe("0=public/default, 10=private"),
+        type: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Optional upstream playlist type"),
+      },
+    },
+    async ({ name, privacy, type }) =>
+      call("netease_playlist_create", () => ncm.call("playlist_create", { name, privacy, type })),
+  );
+
+  server.registerTool(
+    "netease_playlist_delete",
+    {
+      description: "Use only when the user explicitly asks to delete a playlist. This permanently deletes a playlist owned by the bound NetEase account.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+      },
+    },
+    async ({ id }) => call("netease_playlist_delete", () => ncm.call("playlist_delete", { id })),
+  );
+
+  server.registerTool(
+    "netease_playlist_name_update",
+    {
+      description: "Use only when the user explicitly asks to rename a playlist. This updates playlist metadata on the bound NetEase account.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        name: z.string().min(1).max(200).describe("New playlist name"),
+      },
+    },
+    async ({ id, name }) =>
+      call("netease_playlist_name_update", () => ncm.call("playlist_name_update", { id, name })),
+  );
+
+  server.registerTool(
+    "netease_playlist_desc_update",
+    {
+      description: "Use only when the user explicitly asks to change a playlist description. This updates playlist metadata on the bound NetEase account.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        desc: z.string().min(1).max(2000).describe("New playlist description"),
+      },
+    },
+    async ({ id, desc }) =>
+      call("netease_playlist_desc_update", () => ncm.call("playlist_desc_update", { id, desc })),
+  );
+
+  server.registerTool(
+    "netease_playlist_tags_update",
+    {
+      description: "Use only when the user explicitly asks to change playlist tags. This updates playlist metadata on the bound NetEase account.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        tags: z
+          .string()
+          .min(1)
+          .max(200)
+          .describe("Comma-separated playlist tags, for example '流行,华语'"),
+      },
+    },
+    async ({ id, tags }) =>
+      call("netease_playlist_tags_update", () => ncm.call("playlist_tags_update", { id, tags })),
+  );
+
+  server.registerTool(
+    "netease_playlist_subscribe",
+    {
+      description: "Use only when the user explicitly asks to subscribe or unsubscribe a playlist. This changes the bound NetEase account's playlist subscriptions.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        subscribe: z.boolean().default(true).describe("true=subscribe, false=unsubscribe"),
+      },
+    },
+    async ({ id, subscribe }) =>
+      call("netease_playlist_subscribe", () =>
+        ncm.call("playlist_subscribe", { id, t: subscribe ? 1 : 0 }),
+      ),
+  );
+
+  server.registerTool(
+    "netease_playlist_track_add",
+    {
+      description: "Use only when the user explicitly asks to add songs to a playlist. This modifies playlist contents on the bound NetEase account.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        pid: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        tracks: z
+          .string()
+          .min(1)
+          .describe("Comma-separated song IDs to add, for example '33894312,33894313'"),
+      },
+    },
+    async ({ pid, tracks }) =>
+      call("netease_playlist_track_add", () =>
+        ncm.call("playlist_tracks", { op: "add", pid, tracks }),
+      ),
+  );
+
+  server.registerTool(
+    "netease_playlist_track_delete",
+    {
+      description: "Use only when the user explicitly asks to remove songs from a playlist. This modifies playlist contents on the bound NetEase account.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        pid: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        tracks: z
+          .string()
+          .min(1)
+          .describe("Comma-separated song IDs to remove, for example '33894312,33894313'"),
+      },
+    },
+    async ({ pid, tracks }) =>
+      call("netease_playlist_track_delete", () =>
+        ncm.call("playlist_tracks", { op: "del", pid, tracks }),
+      ),
+  );
+
   // ── Top Playlists ──
   server.registerTool(
     "netease_top_playlist",
