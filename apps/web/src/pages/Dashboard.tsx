@@ -1,4 +1,4 @@
-import { Box, Card, Button, Typography, Chip, CircularProgress, Grid, CardActions, CardContent } from "@mui/material";
+import { Box, Card, Button, Typography, Chip, CircularProgress, Grid, CardActions, CardContent, Avatar } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import KeyIcon from "@mui/icons-material/Key";
 import LinkIcon from "@mui/icons-material/Link";
@@ -42,19 +42,39 @@ export default function Dashboard() {
 
               {status === "bound" && account && (
                 <Box>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                    <Typography sx={{ fontWeight: 600 }}>{account.nickname}</Typography>
-                    <Chip label="正常" color="success" size="small" icon={<CheckCircleIcon />} />
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
+                    <Avatar
+                      src={account.avatarUrl || undefined}
+                      sx={{ width: 36, height: 36 }}
+                    >
+                      {account.nickname[0]}
+                    </Avatar>
+                    <Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Typography sx={{ fontWeight: 600 }}>{account.nickname}</Typography>
+                        <Chip label="正常" color="success" size="small" icon={<CheckCircleIcon />} />
+                      </Box>
+                      <Typography color="text.secondary" sx={{ fontSize: 13 }}>UID: {account.neteaseUid}</Typography>
+                    </Box>
                   </Box>
-                  <Typography color="text.secondary" sx={{ fontSize: 14 }}>UID: {account.neteaseUid}</Typography>
                 </Box>
               )}
 
               {status === "expired" && account && (
                 <Box>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                    <Typography sx={{ fontWeight: 600 }}>{account.nickname}</Typography>
-                    <Chip label="Cookie 已过期" color="error" size="small" icon={<ErrorIcon />} />
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
+                    <Avatar
+                      src={account.avatarUrl || undefined}
+                      sx={{ width: 36, height: 36 }}
+                    >
+                      {account.nickname[0]}
+                    </Avatar>
+                    <Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Typography sx={{ fontWeight: 600 }}>{account.nickname}</Typography>
+                        <Chip label="Cookie 已过期" color="error" size="small" icon={<ErrorIcon />} />
+                      </Box>
+                    </Box>
                   </Box>
                   <Typography color="text.secondary" sx={{ fontSize: 14 }}>
                     请重新绑定账号以继续使用 MCP 工具

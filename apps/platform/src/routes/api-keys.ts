@@ -6,6 +6,7 @@ import {
   createApiKey,
   revokeApiKey,
   updateApiKey,
+  listApiKeyLogs,
 } from "../services/api-key-service.js";
 import {
   createApiKeySchema,
@@ -43,6 +44,13 @@ export function createApiKeyRoutes(db: DbClient) {
     const input = updateApiKeySchema.parse(body);
     await updateApiKey(db, userId, keyId, input);
     return c.json({ success: true });
+  });
+
+  router.get("/:id/logs", async (c) => {
+    const userId = getUserId(c);
+    const keyId = c.req.param("id");
+    const logs = await listApiKeyLogs(db, userId, keyId);
+    return c.json({ logs });
   });
 
   return router;

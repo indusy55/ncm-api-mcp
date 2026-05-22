@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import { users } from "./users";
 import { neteaseAccounts } from "./netease-accounts";
 import { apiKeys } from "./api-keys";
+import { apiKeyLogs } from "./api-key-logs";
 import { refreshTokens } from "./refresh-tokens";
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -20,10 +21,18 @@ export const neteaseAccountsRelations = relations(neteaseAccounts, ({ one }) => 
   }),
 }));
 
-export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
+export const apiKeysRelations = relations(apiKeys, ({ one, many }) => ({
   user: one(users, {
     fields: [apiKeys.userId],
     references: [users.id],
+  }),
+  logs: many(apiKeyLogs),
+}));
+
+export const apiKeyLogsRelations = relations(apiKeyLogs, ({ one }) => ({
+  apiKey: one(apiKeys, {
+    fields: [apiKeyLogs.apiKeyId],
+    references: [apiKeys.id],
   }),
 }));
 
@@ -34,5 +43,5 @@ export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
   }),
 }));
 
-export { users, neteaseAccounts, apiKeys, refreshTokens };
+export { users, neteaseAccounts, apiKeys, apiKeyLogs, refreshTokens };
 export type { NeteaseAccountStatus } from "./netease-accounts";

@@ -1,18 +1,69 @@
-import { Box, Drawer, AppBar, Toolbar, Typography, Button, List, ListItem, ListItemButton, ListItemIcon, ListItemText, CircularProgress } from "@mui/material";
+import { useState } from "react";
+import {
+  Box, Drawer, AppBar, Toolbar, Typography, Button, IconButton,
+  List, ListItem, ListItemButton, ListItemIcon, ListItemText,
+  CircularProgress, Alert,
+} from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PersonIcon from "@mui/icons-material/Person";
 import KeyIcon from "@mui/icons-material/Key";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.js";
+import { useNeteaseAccount } from "../hooks/useNeteaseAccount.js";
+import { useMediaQuery, useTheme } from "@mui/material";
 
 const DRAWER_WIDTH = 200;
 
-export default function AppLayout() {
-  const { user, loading, logout } = useAuth();
+function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const menuItems = [
+    { key: "/", label: "控制台", icon: <DashboardIcon /> },
+    { key: "/account/profile", label: "个人资料", icon: <ManageAccountsIcon /> },
+    { key: "/account/bind", label: "网易云账号", icon: <PersonIcon /> },
+    { key: "/account/keys", label: "API 密钥", icon: <KeyIcon /> },
+    { key: "/mcp-setup", label: "MCP 配置", icon: <MenuBookIcon /> },
+  ];
+
+  return (
+    <Box>
+      <Box sx={{ height: 64, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 18 }}>
+        NCM MCP
+      </Box>
+      <List>
+        {menuItems.map((item) => (
+          <ListItem key={item.key} disablePadding>
+            <ListItemButton
+              selected={location.pathname === item.key}
+              onClick={() => {
+                navigate(item.key);
+                onNavigate?.();
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText primary={item.label} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+    </Box>
+  );
+}
+
+export default function AppLayout() {
+  const { user, loading, logout } = useAuth();
+  const { status } = useNeteaseAccount();
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   if (loading) {
     return (
@@ -27,45 +78,51 @@ export default function AppLayout() {
     return null;
   }
 
-  const menuItems = [
-    { key: "/", label: "控制台", icon: <DashboardIcon /> },
-    { key: "/account/bind", label: "网易云账号", icon: <PersonIcon /> },
-    { key: "/account/keys", label: "API 密钥", icon: <KeyIcon /> },
-    { key: "/mcp-setup", label: "MCP 配置", icon: <MenuBookIcon /> },
-  ];
-
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: DRAWER_WIDTH,
-          flexShrink: 0,
-          "& .MuiDrawer-paper": { width: DRAWER_WIDTH },
-        }}
-      >
-        <Box sx={{ height: 64, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 18 }}>
-          NCM MCP
-        </Box>
-        <List>
-          {menuItems.map((item) => (
-            <ListItem key={item.key} disablePadding>
-              <ListItemButton
-                selected={location.pathname === item.key}
-                onClick={() => navigate(item.key)}
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText primary={item.label} />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
-      </Drawer>
+      {/* Mobile drawer */}
+      {isMobile && (
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={() => setMobileOpen(false)}
+          disableEnforceFocus
+          disableAutoFocus
+          sx={{
+            "& .MuiDrawer-paper": { width: DRAWER_WIDTH },
+          }}
+        >
+          <Sidebar onNavigate={() => setMobileOpen(false)} />
+        </Drawer>
+      )}
+
+      {/* Desktop drawer */}
+      {!isMobile && (
+        <Drawer
+          variant="permanent"
+          sx={{
+            width: DRAWER_WIDTH,
+            flexShrink: 0,
+            "& .MuiDrawer-paper": { width: DRAWER_WIDTH },
+          }}
+        >
+          <Sidebar />
+        </Drawer>
+      )}
+
       <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
         <AppBar position="static" color="default" elevation={1}>
-          <Toolbar sx={{ justifyContent: "flex-end" }}>
+          <Toolbar>
+            {isMobile && (
+              <IconButton
+                edge="start"
+                onClick={() => setMobileOpen(true)}
+                sx={{ mr: 1 }}
+              >
+                <MenuIcon />
+              </IconButton>
+            )}
+            <Box sx={{ flexGrow: 1 }} />
             <Typography sx={{ mr: 2 }}>{user.displayName}</Typography>
             <Button
               variant="text"
@@ -79,6 +136,21 @@ export default function AppLayout() {
             </Button>
           </Toolbar>
         </AppBar>
+
+        {/* Account expired banner */}
+        {status === "expired" && (
+          <Alert severity="warning" sx={{ borderRadius: 0 }}>
+            网易云账号 Cookie 已过期，部分 MCP 工具可能无法使用。请
+            <Button
+              size="small"
+              sx={{ mx: 0.5, fontWeight: 600, verticalAlign: "inherit" }}
+              onClick={() => navigate("/account/bind")}
+            >
+              重新绑定
+            </Button>
+          </Alert>
+        )}
+
         <Box sx={{ flexGrow: 1, p: 3, overflow: "auto" }}>
           <Outlet />
         </Box>

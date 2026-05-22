@@ -1,10 +1,20 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { createNcmClient } from "@ncm/api-client";
-import { safeNcmCall, createTextResult } from "./helpers.js";
+import { safeNcmCall } from "./helpers.js";
+import type { NcmApiResponse } from "@ncm/api-client";
 
-export function registerAllTools(server: McpServer, cookies: string) {
+export function registerAllTools(
+  server: McpServer,
+  cookies: string,
+  onToolCall?: (name: string) => void,
+) {
   const ncm = createNcmClient(cookies);
+
+  const call = <T extends NcmApiResponse>(name: string, fn: () => Promise<T>) => {
+    onToolCall?.(name);
+    return safeNcmCall(fn);
+  };
 
   // ── Search ──
   server.tool(
@@ -20,7 +30,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
       offset: z.number().int().min(0).default(0),
     },
     async ({ keywords, type, limit, offset }) =>
-      safeNcmCall(() => ncm.call("cloudsearch", { keywords, type, limit, offset })),
+      call("netease_search", () => ncm.call("cloudsearch", { keywords, type, limit, offset })),
   );
 
   // ── User Info ──
@@ -28,7 +38,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
     "netease_user_info",
     "Get the currently authenticated NetEase user's account info",
     {},
-    async () => safeNcmCall(() => ncm.call("user_account")),
+    async () => call("netease_user_info", () => ncm.call("user_account")),
   );
 
   // ── Song Detail ──
@@ -40,7 +50,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
         .string()
         .describe("Comma-separated song IDs, e.g. '33894312,33894313'"),
     },
-    async ({ ids }) => safeNcmCall(() => ncm.call("song_detail", { ids })),
+    async ({ ids }) => call("netease_song_detail", () => ncm.call("song_detail", { ids })),
   );
 
   // ── Song URL ──
@@ -55,7 +65,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
         .optional()
         .describe("Bitrate: 128000, 192000, 320000, 999000 (lossless)"),
     },
-    async ({ id, br }) => safeNcmCall(() => ncm.call("song_url", { id, br })),
+    async ({ id, br }) => call("netease_song_url", () => ncm.call("song_url", { id, br })),
   );
 
   // ── Lyric ──
@@ -65,7 +75,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
     {
       id: z.union([z.number(), z.string()]).describe("Song ID"),
     },
-    async ({ id }) => safeNcmCall(() => ncm.call("lyric", { id })),
+    async ({ id }) => call("netease_lyric", () => ncm.call("lyric", { id })),
   );
 
   // ── Playlist Detail ──
@@ -81,7 +91,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
         .describe("Number of tracks to return (default all)"),
     },
     async ({ id, s }) =>
-      safeNcmCall(() => ncm.call("playlist_detail", { id, s })),
+      call("netease_playlist_detail", () => ncm.call("playlist_detail", { id, s })),
   );
 
   // ── Top Playlists ──
@@ -98,7 +108,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
       offset: z.number().int().min(0).default(0),
     },
     async ({ cat, order, limit, offset }) =>
-      safeNcmCall(() => ncm.call("top_playlist", { cat, order, limit, offset })),
+      call("netease_top_playlist", () => ncm.call("top_playlist", { cat, order, limit, offset })),
   );
 
   // ── User Playlists ──
@@ -111,7 +121,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
       offset: z.number().int().min(0).default(0),
     },
     async ({ uid, limit, offset }) =>
-      safeNcmCall(() => ncm.call("user_playlist", { uid, limit, offset })),
+      call("netease_user_playlists", () => ncm.call("user_playlist", { uid, limit, offset })),
   );
 
   // ── User Record ──
@@ -127,7 +137,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
       limit: z.number().int().min(1).max(100).default(30),
     },
     async ({ uid, type, limit }) =>
-      safeNcmCall(() => ncm.call("user_record", { uid, type, limit })),
+      call("netease_user_record", () => ncm.call("user_record", { uid, type, limit })),
   );
 
   // ── Album Detail ──
@@ -137,7 +147,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
     {
       id: z.union([z.number(), z.string()]).describe("Album ID"),
     },
-    async ({ id }) => safeNcmCall(() => ncm.call("album", { id })),
+    async ({ id }) => call("netease_album_detail", () => ncm.call("album", { id })),
   );
 
   // ── Artist Info ──
@@ -147,7 +157,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
     {
       id: z.union([z.number(), z.string()]).describe("Artist ID"),
     },
-    async ({ id }) => safeNcmCall(() => ncm.call("artist_detail", { id })),
+    async ({ id }) => call("netease_artist_info", () => ncm.call("artist_detail", { id })),
   );
 
   // ── Artist Songs ──
@@ -160,7 +170,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
       offset: z.number().int().min(0).default(0),
     },
     async ({ id, limit, offset }) =>
-      safeNcmCall(() => ncm.call("artist_songs", { id, limit, offset })),
+      call("netease_artist_songs", () => ncm.call("artist_songs", { id, limit, offset })),
   );
 
   // ── Personal FM ──
@@ -168,7 +178,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
     "netease_personal_fm",
     "Get personalized recommended songs (personal FM mode)",
     {},
-    async () => safeNcmCall(() => ncm.call("personal_fm")),
+    async () => call("netease_personal_fm", () => ncm.call("personal_fm")),
   );
 
   // ── Like / Unlike ──
@@ -180,7 +190,9 @@ export function registerAllTools(server: McpServer, cookies: string) {
       like: z.boolean().default(true).describe("true=like, false=unlike"),
     },
     async ({ id, like }) =>
-      safeNcmCall(() => ncm.call("like", { id, like: like ? "true" : "false" })),
+      call("netease_like", () =>
+        ncm.call("like", { id, like: like ? "true" : "false" }),
+      ),
   );
 
   // ── Likelist ──
@@ -188,7 +200,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
     "netease_likelist",
     "Get the list of liked song IDs for the current user",
     {},
-    async () => safeNcmCall(() => ncm.call("likelist")),
+    async () => call("netease_likelist", () => ncm.call("likelist")),
   );
 
   // ── Recommend Songs ──
@@ -196,7 +208,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
     "netease_recommend_songs",
     "Get daily recommended songs (personalized)",
     {},
-    async () => safeNcmCall(() => ncm.call("recommend_songs")),
+    async () => call("netease_recommend_songs", () => ncm.call("recommend_songs")),
   );
 
   // ── Recommend Resource ──
@@ -204,7 +216,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
     "netease_recommend_resource",
     "Get personalized recommended playlists for the current user",
     {},
-    async () => safeNcmCall(() => ncm.call("recommend_resource")),
+    async () => call("netease_recommend_resource", () => ncm.call("recommend_resource")),
   );
 
   // ── Banner ──
@@ -212,7 +224,7 @@ export function registerAllTools(server: McpServer, cookies: string) {
     "netease_banner",
     "Get banners from the NetEase Cloud Music homepage",
     {},
-    async () => safeNcmCall(() => ncm.call("banner")),
+    async () => call("netease_banner", () => ncm.call("banner")),
   );
 
   // ── Playlist Comments ──
@@ -225,6 +237,8 @@ export function registerAllTools(server: McpServer, cookies: string) {
       offset: z.number().int().min(0).default(0),
     },
     async ({ id, limit, offset }) =>
-      safeNcmCall(() => ncm.call("comment_playlist", { id, limit, offset })),
+      call("netease_comment_playlist", () =>
+        ncm.call("comment_playlist", { id, limit, offset }),
+      ),
   );
 }

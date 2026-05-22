@@ -1,7 +1,8 @@
 import { eq, desc, and } from "drizzle-orm";
 import type { DbClient } from "@ncm/database";
-import { apiKeys } from "@ncm/database/schema";
+import { apiKeys, apiKeyLogs } from "@ncm/database/schema";
 import { generateApiKey } from "@ncm/auth";
+import { AppError } from "../middleware/error.js";
 
 export async function listApiKeys(db: DbClient, userId: string) {
   const keys = await db
@@ -29,17 +30,21 @@ export async function createApiKey(
 ) {
   const { fullKey, keyHash, keyPrefix } = generateApiKey();
 
-  await db.insert(apiKeys).values({
-    userId,
-    name,
-    keyHash,
-    keyPrefix,
-    ...(expiresInDays
-      ? { expiresAt: new Date(Date.now() + expiresInDays * 86400000) }
-      : {}),
-  });
+  const record = await db
+    .insert(apiKeys)
+    .values({
+      userId,
+      name,
+      keyHash,
+      keyPrefix,
+      ...(expiresInDays
+        ? { expiresAt: new Date(Date.now() + expiresInDays * 86400000) }
+        : {}),
+    })
+    .returning({ id: apiKeys.id })
+    .get();
 
-  return { id: fullKey, name, keyPrefix, fullKey };
+  return { id: record.id, name, keyPrefix, fullKey };
 }
 
 export async function revokeApiKey(
@@ -66,4 +71,34 @@ export async function updateApiKey(
       ...(input.isActive !== undefined && { isActive: input.isActive }),
     })
     .where(and(eq(apiKeys.id, keyId), eq(apiKeys.userId, userId)));
+}
+
+export async function listApiKeyLogs(
+  db: DbClient,
+  userId: string,
+  keyId: string,
+) {
+  const key = await db
+    .select({ id: apiKeys.id })
+    .from(apiKeys)
+    .where(and(eq(apiKeys.id, keyId), eq(apiKeys.userId, userId)))
+    .get();
+
+  if (!key) {
+    throw new AppError(404, "API key not found");
+  }
+
+  const logs = await db
+    .select()
+    .from(apiKeyLogs)
+    .where(eq(apiKeyLogs.apiKeyId, keyId))
+    .orderBy(desc(apiKeyLogs.createdAt))
+    .limit(100);
+
+  return logs.map((l) => ({
+    id: l.id,
+    toolName: l.toolName,
+    ipAddress: l.ipAddress,
+    createdAt: l.createdAt,
+  }));
 }

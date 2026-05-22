@@ -17,6 +17,11 @@ export default function AccountBinding() {
   const { qrUrl, pollState, qrNickname, startQrFlow, reset } =
     useQrPolling(onConfirmed);
 
+  const handleRefresh = () => {
+    reset();
+    setTimeout(startQrFlow, 100);
+  };
+
   return (
     <Box sx={{ maxWidth: 480, mx: "auto", py: 6, px: 3 }}>
       <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>绑定网易云账号</Typography>
@@ -63,7 +68,7 @@ export default function AccountBinding() {
 
             {pollState === "expired" && (
               <Alert severity="error" action={
-                <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={reset}>
+                <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={handleRefresh}>
                   重新扫码
                 </Button>
               }>

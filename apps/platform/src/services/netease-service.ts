@@ -25,37 +25,46 @@ export async function checkQrStatus(
   key: string,
   userId: string,
 ) {
-  const res = await ncm.login_qr_check({ key });
-  const code = res.body.code;
+  let res;
+  try {
+    res = await ncm.login_qr_check({ key });
+  } catch (err) {
+    console.error("login_qr_check failed:", err);
+    return { status: "waiting" as const };
+  }
+  const code = res.body?.code;
+  if (code === undefined) {
+    console.error("login_qr_check: missing code in response", JSON.stringify(res).slice(0, 200));
+    return { status: "waiting" as const };
+  }
 
   if (code === 803) {
-    // Scan confirmed — extract and store cookies
-    const cookieString = extractCookies(res.cookie);
-    const encryptionKey = deriveEncryptionKey(env.COOKIE_ENCRYPTION_KEY);
-    const { encrypted, iv, authTag } = encryptCookies(cookieString, encryptionKey);
+    try {
+      const cookieArray: string[] = res.cookie;
+      if (!Array.isArray(cookieArray)) {
+        console.error("login_qr_check 803: cookie is not an array", typeof cookieArray);
+        return { status: "expired" as const };
+      }
 
-    // Get user info
-    const userInfo = await ncm.user_account({ cookie: cookieString });
-    const profile = userInfo.body.profile || userInfo.body.account || {};
-    const neteaseUid = profile.userId || profile.id;
-    const nickname = profile.nickname || "Unknown";
-    const avatarUrl = profile.avatarUrl || null;
+      const cookieString = extractCookies(cookieArray);
+      const encryptionKey = deriveEncryptionKey(env.COOKIE_ENCRYPTION_KEY);
+      const { encrypted, iv, authTag } = encryptCookies(cookieString, encryptionKey);
 
-    await db
-      .insert(neteaseAccounts)
-      .values({
-        userId,
-        neteaseUid,
-        nickname,
-        avatarUrl,
-        cookiesEncrypted: encrypted,
-        cookiesIv: iv,
-        cookiesAuthTag: authTag,
-        status: "active",
-      })
-      .onConflictDoUpdate({
-        target: neteaseAccounts.userId,
-        set: {
+      // Get user info
+      const userInfo = await ncm.user_account({ cookie: cookieString });
+      const profile = userInfo.body?.profile || userInfo.body?.account || {};
+      const neteaseUid = profile.userId || profile.id;
+      if (!neteaseUid) {
+        console.error("user_account: missing uid", JSON.stringify(userInfo.body).slice(0, 200));
+        return { status: "expired" as const };
+      }
+      const nickname = profile.nickname || "Unknown";
+      const avatarUrl = profile.avatarUrl || null;
+
+      await db
+        .insert(neteaseAccounts)
+        .values({
+          userId,
           neteaseUid,
           nickname,
           avatarUrl,
@@ -63,10 +72,25 @@ export async function checkQrStatus(
           cookiesIv: iv,
           cookiesAuthTag: authTag,
           status: "active",
-        },
-      });
+        })
+        .onConflictDoUpdate({
+          target: neteaseAccounts.userId,
+          set: {
+            neteaseUid,
+            nickname,
+            avatarUrl,
+            cookiesEncrypted: encrypted,
+            cookiesIv: iv,
+            cookiesAuthTag: authTag,
+            status: "active",
+          },
+        });
 
-    return { status: "confirmed" as const, nickname, uid: neteaseUid, avatarUrl };
+      return { status: "confirmed" as const, nickname, uid: neteaseUid, avatarUrl };
+    } catch (err) {
+      console.error("checkQrStatus 803 flow failed:", err);
+      return { status: "expired" as const };
+    }
   }
 
   if (code === 802) {

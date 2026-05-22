@@ -58,6 +58,7 @@ export function useQrPolling(onConfirmed: () => void) {
     setQrUrl(`https://music.163.com/login?codekey=${qrKey}`);
 
     // Step 2: Start polling
+    let retries = 0;
     const poll = async () => {
       try {
         const statusRes = await api.get<{
@@ -86,9 +87,16 @@ export function useQrPolling(onConfirmed: () => void) {
         }
 
         // Continue polling
+        retries = 0;
         setTimeout(poll, 3000);
       } catch {
-        setPollState("expired");
+        retries++;
+        if (retries >= 3) {
+          setPollState("expired");
+        } else {
+          // Retry after a short delay on network error
+          setTimeout(poll, 2000);
+        }
       }
     };
 

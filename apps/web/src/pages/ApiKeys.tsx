@@ -3,11 +3,12 @@ import {
   Box, Button, Typography, Chip, CircularProgress,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Snackbar, Alert,
+  TextField, Snackbar, Alert, Card, CardContent,
 } from "@mui/material";
 import KeyIcon from "@mui/icons-material/Key";
 import AddIcon from "@mui/icons-material/Add";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import HistoryIcon from "@mui/icons-material/History";
 import api from "../api/client.js";
 
 interface ApiKey {
@@ -26,6 +27,13 @@ interface SnackbarState {
   severity: "success" | "error" | "warning";
 }
 
+interface UsageLog {
+  id: string;
+  toolName: string;
+  ipAddress: string | null;
+  createdAt: string;
+}
+
 export default function ApiKeys() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +48,9 @@ export default function ApiKeys() {
     message: "",
     severity: "success",
   });
+  const [logKeyId, setLogKeyId] = useState<string | null>(null);
+  const [logs, setLogs] = useState<UsageLog[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
 
   const showSnackbar = (
     severity: SnackbarState["severity"],
@@ -80,6 +91,19 @@ export default function ApiKeys() {
     }
   };
 
+  const handleOpenLogs = async (keyId: string) => {
+    setLogKeyId(keyId);
+    setLogsLoading(true);
+    try {
+      const res = await api.get<{ logs: UsageLog[] }>(`/keys/${keyId}/logs`);
+      setLogs(res.data.logs);
+    } catch {
+      showSnackbar("error", "获取使用日志失败");
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
   const handleRevoke = async (id: string) => {
     try {
       await api.delete(`/keys/${id}`);
@@ -117,68 +141,101 @@ export default function ApiKeys() {
           <CircularProgress />
         </Box>
       ) : (
-        <TableContainer component={Paper} variant="outlined">
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>名称</TableCell>
-                <TableCell>密钥</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell>最后使用</TableCell>
-                <TableCell>操作</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {keys.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                    暂无 API 密钥
-                  </TableCell>
-                </TableRow>
-              ) : (
-                keys.map((key) => (
-                  <TableRow key={key.id}>
-                    <TableCell>{key.name}</TableCell>
-                    <TableCell>
-                      <Typography
-                        component="code"
-                        sx={{ fontFamily: "monospace", fontSize: 13, bgcolor: "grey.100", px: 0.5, py: 0.25, borderRadius: 0.5 }}
-                      >
-                        {key.keyPrefix}...
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
+        <>
+          {/* Mobile: card layout */}
+          <Box sx={{ display: { xs: "flex", sm: "none" }, flexDirection: "column", gap: 1 }}>
+            {keys.length === 0 ? (
+              <Typography color="text.secondary" sx={{ textAlign: "center", py: 4 }}>
+                暂无 API 密钥
+              </Typography>
+            ) : (
+              keys.map((key) => (
+                <Card key={key.id} variant="outlined">
+                  <CardContent sx={{ pb: 1 }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                      <Typography sx={{ fontWeight: 600 }}>{key.name}</Typography>
                       <Chip
                         label={key.isActive ? "已启用" : "已撤销"}
                         color={key.isActive ? "success" : "error"}
                         size="small"
                       />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {key.lastUsedAt
-                          ? new Date(key.lastUsedAt).toLocaleString()
-                          : "从未使用"}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      {key.isActive && (
-                        <Button
-                          color="error"
-                          size="small"
-                          variant="outlined"
-                          onClick={() => handleRevoke(key.id)}
-                        >
-                          撤销
-                        </Button>
-                      )}
+                    </Box>
+                    <Typography
+                      component="code"
+                      sx={{ fontFamily: "monospace", fontSize: 13, bgcolor: "grey.100", px: 0.5, py: 0.25, borderRadius: 0.5 }}
+                    >
+                      {key.keyPrefix}...
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+                      最后使用：{key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleString() : "从未使用"}
+                    </Typography>
+                  </CardContent>
+                  <Box sx={{ display: "flex", gap: 0.5, px: 1, pb: 1 }}>
+                    <Button size="small" variant="text" startIcon={<HistoryIcon />} onClick={() => handleOpenLogs(key.id)}>
+                      日志
+                    </Button>
+                    {key.isActive && (
+                      <Button size="small" variant="outlined" color="error" onClick={() => handleRevoke(key.id)}>
+                        撤销
+                      </Button>
+                    )}
+                  </Box>
+                </Card>
+              ))
+            )}
+          </Box>
+
+          {/* Desktop: table */}
+          <TableContainer component={Paper} variant="outlined" sx={{ display: { xs: "none", sm: "block" }, overflowX: "auto" }}>
+            <Table sx={{ minWidth: 500 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>名称</TableCell>
+                  <TableCell>密钥</TableCell>
+                  <TableCell>状态</TableCell>
+                  <TableCell>最后使用</TableCell>
+                  <TableCell>操作</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {keys.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                      暂无 API 密钥
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                ) : (
+                  keys.map((key) => (
+                    <TableRow key={key.id}>
+                      <TableCell sx={{ whiteSpace: "nowrap" }}>{key.name}</TableCell>
+                      <TableCell>
+                        <Typography component="code" sx={{ fontFamily: "monospace", fontSize: 13, bgcolor: "grey.100", px: 0.5, py: 0.25, borderRadius: 0.5 }}>
+                          {key.keyPrefix}...
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip label={key.isActive ? "已启用" : "已撤销"} color={key.isActive ? "success" : "error"} size="small" />
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: "nowrap" }}>
+                        <Typography variant="body2" color="text.secondary">
+                          {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleString() : "从未使用"}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: "flex", gap: 0.5 }}>
+                          <Button size="small" variant="text" startIcon={<HistoryIcon />} onClick={() => handleOpenLogs(key.id)}>日志</Button>
+                          {key.isActive && (
+                            <Button size="small" variant="outlined" color="error" onClick={() => handleRevoke(key.id)}>撤销</Button>
+                          )}
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </>
       )}
 
       {/* Create Key Dialog */}
@@ -248,6 +305,60 @@ export default function ApiKeys() {
             复制密钥
           </Button>
           <Button onClick={() => setNewKeyResult(null)}>关闭</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Usage Log Dialog */}
+      <Dialog
+        open={!!logKeyId}
+        onClose={() => setLogKeyId(null)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>API 密钥使用日志</DialogTitle>
+        <DialogContent>
+          {logsLoading ? (
+            <Box sx={{ textAlign: "center", py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : logs.length === 0 ? (
+            <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>
+              暂无使用记录
+            </Typography>
+          ) : (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>时间</TableCell>
+                    <TableCell>工具</TableCell>
+                    <TableCell>IP</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {logs.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell sx={{ whiteSpace: "nowrap" }}>
+                        {new Date(log.createdAt).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <Typography
+                          component="code"
+                          sx={{ fontFamily: "monospace", fontSize: 13, bgcolor: "grey.100", px: 0.5, py: 0.25, borderRadius: 0.5 }}
+                        >
+                          {log.toolName}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>{log.ipAddress || "-"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLogKeyId(null)}>关闭</Button>
         </DialogActions>
       </Dialog>
 

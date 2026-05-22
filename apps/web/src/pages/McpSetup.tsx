@@ -12,128 +12,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import { useNavigate } from "react-router-dom";
 
-const steps = [
-  {
-    icon: <KeyIcon />,
-    title: "创建 API 密钥",
-    content: (navigate: (path: string) => void) => (
-      <Box>
-        <Typography variant="body2" sx={{ mb: 1 }}>
-          在{" "}
-          <Typography
-            component="a"
-            onClick={() => navigate("/account/keys")}
-            sx={{ color: "primary.main", cursor: "pointer", fontWeight: 500 }}
-          >
-            API 密钥
-          </Typography>{" "}
-          页面创建一个新的密钥。
-        </Typography>
-      </Box>
-    ),
-  },
-  {
-    icon: <SettingsIcon />,
-    title: "配置 MCP 客户端",
-    content: () => (
-      <Box>
-        <Typography variant="body2" sx={{ mb: 1 }}>
-          在 MCP 客户端的配置文件中添加以下配置：
-        </Typography>
-
-        <CodeBlock code={`{
-  "mcpServers": {
-    "netease-cloud-music": {
-      "type": "streamable-http",
-      "url": "http://localhost:3002/mcp",
-      "headers": {
-        "Authorization": "Bearer <你的 API 密钥>"
-      }
-    }
-  }
-}`} />
-
-        <Divider sx={{ mb: 2 }} />
-
-        <Typography variant="subtitle2" sx={{ mb: 1 }}>
-          客户端配置示例
-        </Typography>
-
-        <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-          Claude Desktop
-        </Typography>
-        <CodeBlock code={`# claude_desktop_config.json
-# macOS: ~/Library/Application Support/Claude/
-# Windows: %APPDATA%\\Claude\\
-{
-  "mcpServers": {
-    "netease-cloud-music": {
-      "type": "streamable-http",
-      "url": "http://localhost:3002/mcp",
-      "headers": {
-        "Authorization": "Bearer ncm_你的密钥..."
-      }
-    }
-  }
-}`} />
-
-        <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-          Cursor
-        </Typography>
-        <CodeBlock code={`# .cursor/mcp.json
-{
-  "mcpServers": {
-    "netease-cloud-music": {
-      "type": "streamable-http",
-      "url": "http://localhost:3002/mcp",
-      "headers": {
-        "Authorization": "Bearer ncm_你的密钥..."
-      }
-    }
-  }
-}`} />
-
-        <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-          Windsurf
-        </Typography>
-        <CodeBlock code={`# ~/.codeium/windsurf/mcp_config.json
-{
-  "mcpServers": {
-    "netease-cloud-music": {
-      "type": "streamable-http",
-      "url": "http://localhost:3002/mcp",
-      "headers": {
-        "Authorization": "Bearer ncm_你的密钥..."
-      }
-    }
-  }
-}`} />
-
-        <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-          OpenAI Codex CLI
-        </Typography>
-        <CodeBlock code={`# ~/.codex/config.toml
-experimental_use_rmcp_client = true
-
-[mcp_servers.netease-cloud-music]
-url = "http://localhost:3002/mcp"
-bearer_token = "ncm_你的密钥..."
-startup_timeout_sec = 10
-tool_timeout_sec = 60`} />
-      </Box>
-    ),
-  },
-  {
-    icon: <CheckCircleIcon />,
-    title: "验证连接",
-    content: () => (
-      <Typography variant="body2" color="text.secondary">
-        配置完成后，重启 MCP 客户端。如果连接成功，你将看到可用的网易云音乐工具列表，
-        包括搜索歌曲、获取歌词、查看歌单等功能。
-      </Typography>
-    ),
-  },
-];
+const mcpUrl = `http://${window.location.hostname}:3001/mcp`;
 
 function CodeBlock({ code }: { code: string }) {
   return (
@@ -153,8 +32,134 @@ function CodeBlock({ code }: { code: string }) {
   );
 }
 
+function useSteps(navigate: ReturnType<typeof useNavigate>, mcpUrl: string) {
+  return [
+    {
+      icon: <KeyIcon />,
+      title: "创建 API 密钥",
+      content: () => (
+        <Box>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            在{" "}
+            <Typography
+              component="a"
+              onClick={() => navigate("/account/keys")}
+              sx={{ color: "primary.main", cursor: "pointer", fontWeight: 500 }}
+            >
+              API 密钥
+            </Typography>{" "}
+            页面创建一个新的密钥。
+          </Typography>
+        </Box>
+      ),
+    },
+    {
+      icon: <SettingsIcon />,
+      title: "配置 MCP 客户端",
+      content: () => (
+        <Box>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            在 MCP 客户端的配置文件中添加以下配置：
+          </Typography>
+
+          <CodeBlock code={JSON.stringify({
+            mcpServers: {
+              "netease-cloud-music": {
+                type: "streamable-http",
+                url: mcpUrl,
+                headers: { Authorization: "Bearer <你的 API 密钥>" },
+              },
+            },
+          }, null, 2)} />
+
+          <Divider sx={{ mb: 2 }} />
+
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            客户端配置示例
+          </Typography>
+
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+            Claude Desktop
+          </Typography>
+          <CodeBlock code={[
+            "# claude_desktop_config.json",
+            "# macOS: ~/Library/Application Support/Claude/",
+            '# Windows: %APPDATA%\\Claude\\',
+            JSON.stringify({
+              mcpServers: {
+                "netease-cloud-music": {
+                  type: "streamable-http",
+                  url: mcpUrl,
+                  headers: { Authorization: "Bearer ncm_你的密钥..." },
+                },
+              },
+            }, null, 2),
+          ].join("\n")} />
+
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+            Cursor
+          </Typography>
+          <CodeBlock code={[
+            "# .cursor/mcp.json",
+            JSON.stringify({
+              mcpServers: {
+                "netease-cloud-music": {
+                  type: "streamable-http",
+                  url: mcpUrl,
+                  headers: { Authorization: "Bearer ncm_你的密钥..." },
+                },
+              },
+            }, null, 2),
+          ].join("\n")} />
+
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+            Windsurf
+          </Typography>
+          <CodeBlock code={[
+            "# ~/.codeium/windsurf/mcp_config.json",
+            JSON.stringify({
+              mcpServers: {
+                "netease-cloud-music": {
+                  type: "streamable-http",
+                  url: mcpUrl,
+                  headers: { Authorization: "Bearer ncm_你的密钥..." },
+                },
+              },
+            }, null, 2),
+          ].join("\n")} />
+
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+            OpenAI Codex CLI
+          </Typography>
+          <CodeBlock code={[
+            "# ~/.codex/config.toml",
+            'experimental_use_rmcp_client = true',
+            '',
+            "[mcp_servers.netease-cloud-music]",
+            `url = "${mcpUrl}"`,
+            'bearer_token = "ncm_你的密钥..."',
+            "startup_timeout_sec = 10",
+            "tool_timeout_sec = 60",
+          ].join("\n")} />
+        </Box>
+      ),
+    },
+    {
+      icon: <CheckCircleIcon />,
+      title: "验证连接",
+      content: () => (
+        <Typography variant="body2" color="text.secondary">
+          配置完成后，重启 MCP 客户端。如果连接成功，你将看到可用的网易云音乐工具列表，
+          包括搜索歌曲、获取歌词、查看歌单等功能。
+        </Typography>
+      ),
+    },
+  ];
+}
+
 export default function McpSetup() {
   const navigate = useNavigate();
+  const steps = useSteps(navigate, mcpUrl);
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto" }}>
@@ -190,7 +195,7 @@ export default function McpSetup() {
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
               {step.title}
             </Typography>
-            {step.content(navigate)}
+            {step.content()}
           </Box>
         </Box>
       ))}
