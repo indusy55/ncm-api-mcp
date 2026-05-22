@@ -39,8 +39,17 @@ services:
       - COOKIE_ENCRYPTION_KEY=${COOKIE_ENCRYPTION_KEY}
     volumes:
       - platform-data:/data
+
+  nginx:
+    image: nginx:alpine
+    restart: always
     ports:
-      - "80:3001"
+      - "80:80"
+    depends_on:
+      - platform
+      - mcp-server
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
   redis-data:

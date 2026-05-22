@@ -9,6 +9,7 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),
   JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
   COOKIE_ENCRYPTION_KEY: z.string().length(64),
+  MCP_SERVER_URL: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
