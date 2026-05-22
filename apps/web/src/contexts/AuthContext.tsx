@@ -4,15 +4,15 @@ import api from "../api/client.js";
 interface User {
   id: string;
   email: string;
-  displayName: string;
+  username: string;
   avatarUrl: string | null;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, displayName: string) => Promise<void>;
+  login: (login: string, password: string) => Promise<void>;
+  register: (email: string, password: string, username: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -44,8 +44,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchUser();
   }, [fetchUser]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const res = await api.post("/auth/login", { email, password });
+  const login = useCallback(async (login: string, password: string) => {
+    const res = await api.post("/auth/login", { login, password });
     const { user: userData, accessToken, refreshToken } = res.data;
     localStorage.setItem("accessToken", accessToken);
     localStorage.setItem("refreshToken", refreshToken);
@@ -53,8 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(
-    async (email: string, password: string, displayName: string) => {
-      const res = await api.post("/auth/register", { email, password, displayName });
+    async (email: string, password: string, username: string) => {
+      const res = await api.post("/auth/register", { email, password, username });
       const { user: userData, accessToken, refreshToken } = res.data;
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);

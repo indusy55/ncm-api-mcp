@@ -136,15 +136,6 @@ function ConfigTabs({ keyPrefix, fullKey, onCopy }: { keyPrefix: string; fullKey
 
   return (
     <Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, p: 1.5, bgcolor: "rgba(255, 152, 0, 0.08)", borderRadius: 1, border: "1px solid", borderColor: "rgba(255, 152, 0, 0.3)" }}>
-        <ContentCopyIcon sx={{ fontSize: 16, color: "warning.main" }} />
-        <Typography variant="body2" sx={{ flex: 1 }}>
-          密钥：<Typography component="code" sx={{ fontFamily: "monospace", fontWeight: 600 }}>{displayKey}</Typography>
-        </Typography>
-        <Button size="small" variant="text" onClick={() => { navigator.clipboard.writeText(displayKey); onCopy("密钥已复制"); }}>
-          复制密钥
-        </Button>
-      </Box>
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, minHeight: 36, '& .MuiTab-root': { minHeight: 36, py: 0.5 } }}>
         {configs.map((c) => <Tab key={c.label} label={c.label} />)}
       </Tabs>
@@ -240,8 +231,12 @@ export default function ApiKeys() {
     }
   };
 
+  const getFullKey = (key: ApiKey): string | undefined => {
+    return fullKeysRef.current[key.id];
+  };
+
   const handleCopyKey = (key: ApiKey) => {
-    const fullKey = fullKeysRef.current[key.id];
+    const fullKey = getFullKey(key);
     if (fullKey) {
       navigator.clipboard.writeText(fullKey);
       showSnackbar("success", "密钥已复制");
@@ -323,7 +318,7 @@ export default function ApiKeys() {
                     </Typography>
                   </CardContent>
                   <Box sx={{ display: "flex", gap: 0.5, px: 1, pb: 1 }}>
-                    <Button size="small" variant="text" startIcon={<SettingsIcon />} onClick={() => setConfigKey({ id: key.id, keyPrefix: key.keyPrefix, fullKey: fullKeysRef.current[key.id] })}>
+                    <Button size="small" variant="text" startIcon={<SettingsIcon />} onClick={() => setConfigKey({ id: key.id, keyPrefix: key.keyPrefix, fullKey: getFullKey(key) })}>
                       配置
                     </Button>
                     <Button size="small" variant="text" startIcon={<HistoryIcon />} onClick={() => handleOpenLogs(key.id)}>
@@ -383,7 +378,7 @@ export default function ApiKeys() {
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: "flex", gap: 0.5 }}>
-                          <Button size="small" variant="text" startIcon={<SettingsIcon />} onClick={() => setConfigKey({ id: key.id, keyPrefix: key.keyPrefix, fullKey: fullKeysRef.current[key.id] })}>配置</Button>
+                          <Button size="small" variant="text" startIcon={<SettingsIcon />} onClick={() => setConfigKey({ id: key.id, keyPrefix: key.keyPrefix, fullKey: getFullKey(key) })}>配置</Button>
                           <Button size="small" variant="text" startIcon={<HistoryIcon />} onClick={() => handleOpenLogs(key.id)}>日志</Button>
                           {key.isActive && (
                             <Button size="small" variant="outlined" color="error" onClick={() => handleRevoke(key.id)}>撤销</Button>

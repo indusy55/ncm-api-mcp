@@ -13,7 +13,7 @@ import { AppError } from "../middleware/error.js";
 import type { Env } from "../config.js";
 
 export interface AuthResult {
-  user: { id: string; email: string; displayName: string; avatarUrl: string | null };
+  user: { id: string; email: string; username: string; avatarUrl: string | null };
   accessToken: string;
   refreshToken: string;
 }
@@ -21,16 +21,26 @@ export interface AuthResult {
 export async function registerUser(
   db: DbClient,
   env: Env,
-  input: { email: string; password: string; displayName: string },
+  input: { email: string; password: string; username: string },
 ): Promise<AuthResult> {
-  const existing = await db
+  const existingEmail = await db
     .select()
     .from(users)
     .where(eq(users.email, input.email))
     .get();
 
-  if (existing) {
+  if (existingEmail) {
     throw new AppError(409, "Email already registered");
+  }
+
+  const existingUsername = await db
+    .select()
+    .from(users)
+    .where(eq(users.username, input.username))
+    .get();
+
+  if (existingUsername) {
+    throw new AppError(409, "Username already taken");
   }
 
   const passwordHash = await hashPassword(input.password);
@@ -38,7 +48,7 @@ export async function registerUser(
   await db.insert(users).values({
     email: input.email,
     passwordHash,
-    displayName: input.displayName,
+    username: input.username,
   });
 
   const user = await db
@@ -73,7 +83,7 @@ export async function registerUser(
     user: {
       id: user!.id,
       email: user!.email,
-      displayName: user!.displayName,
+      username: user!.username,
       avatarUrl: user!.avatarUrl,
     },
     accessToken,
@@ -84,21 +94,21 @@ export async function registerUser(
 export async function loginUser(
   db: DbClient,
   env: Env,
-  input: { email: string; password: string },
+  input: { login: string; password: string },
 ): Promise<AuthResult> {
-  const user = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, input.email))
-    .get();
+  // Look up by email first, then by username
+  const isEmail = input.login.includes("@");
+  const user = isEmail
+    ? await db.select().from(users).where(eq(users.email, input.login)).get()
+    : await db.select().from(users).where(eq(users.username, input.login)).get();
 
   if (!user) {
-    throw new AppError(401, "Invalid email or password");
+    throw new AppError(401, "Invalid email/username or password");
   }
 
   const valid = await verifyPassword(user.passwordHash, input.password);
   if (!valid) {
-    throw new AppError(401, "Invalid email or password");
+    throw new AppError(401, "Invalid email/username or password");
   }
 
   const accessToken = await signAccessToken(
@@ -127,7 +137,7 @@ export async function loginUser(
     user: {
       id: user.id,
       email: user.email,
-      displayName: user.displayName,
+      username: user.username,
       avatarUrl: user.avatarUrl,
     },
     accessToken,
@@ -201,7 +211,7 @@ export async function refreshTokensAction(
     user: {
       id: user.id,
       email: user.email,
-      displayName: user.displayName,
+      username: user.username,
       avatarUrl: user.avatarUrl,
     },
     accessToken,

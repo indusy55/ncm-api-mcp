@@ -18,7 +18,7 @@ export async function getUser(db: DbClient, userId: string) {
   return {
     id: user.id,
     email: user.email,
-    displayName: user.displayName,
+    username: user.username,
     avatarUrl: user.avatarUrl,
     createdAt: user.createdAt,
   };
@@ -27,12 +27,12 @@ export async function getUser(db: DbClient, userId: string) {
 export async function updateUser(
   db: DbClient,
   userId: string,
-  input: { displayName?: string; avatarUrl?: string | null },
+  input: { username?: string; avatarUrl?: string | null },
 ) {
   await db
     .update(users)
     .set({
-      ...(input.displayName !== undefined && { displayName: input.displayName }),
+      ...(input.username !== undefined && { username: input.username }),
       ...(input.avatarUrl !== undefined && { avatarUrl: input.avatarUrl }),
     })
     .where(eq(users.id, userId));

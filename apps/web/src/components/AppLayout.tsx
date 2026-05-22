@@ -123,7 +123,7 @@ export default function AppLayout() {
               </IconButton>
             )}
             <Box sx={{ flexGrow: 1 }} />
-            <Typography sx={{ mr: 2 }}>{user.displayName}</Typography>
+            <Typography sx={{ mr: 2 }}>{user.username}</Typography>
             <Button
               variant="text"
               startIcon={<LogoutIcon />}

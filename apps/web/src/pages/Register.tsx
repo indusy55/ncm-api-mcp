@@ -7,7 +7,7 @@ export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +18,7 @@ export default function Register() {
     setLoading(true);
     setError(null);
     try {
-      await register(email, password, displayName);
+      await register(email, password, username);
       setSuccess(true);
       setTimeout(() => navigate("/"), 1000);
     } catch (err: any) {
@@ -36,12 +36,14 @@ export default function Register() {
         </Typography>
         <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
-            label="显示名称"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
+            label="用户名"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             required
             fullWidth
             size="small"
+            helperText="3-30 个字符，仅支持字母、数字和下划线"
+            slotProps={{ htmlInput: { minLength: 3, pattern: "^[a-zA-Z0-9_]+$" } }}
           />
           <TextField
             label="邮箱"

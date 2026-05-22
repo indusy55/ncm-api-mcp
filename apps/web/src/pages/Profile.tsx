@@ -17,7 +17,7 @@ import { useAuth } from "../contexts/AuthContext.js";
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
-  const [displayName, setDisplayName] = useState(user?.displayName ?? "");
+  const [username, setUsername] = useState(user?.username ?? "");
   const [saving, setSaving] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
@@ -36,10 +36,10 @@ export default function Profile() {
   };
 
   const handleSaveProfile = async () => {
-    if (!displayName.trim()) return;
+    if (!username.trim()) return;
     setSaving(true);
     try {
-      await api.put("/users/me", { displayName });
+      await api.put("/users/me", { username });
       await refreshUser();
       showSnackbar("success", "个人资料已更新");
     } catch (err: any) {
@@ -91,16 +91,16 @@ export default function Profile() {
           </Typography>
           <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
             <TextField
-              label="显示名称"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+              label="用户名"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               size="small"
               sx={{ flexGrow: 1 }}
             />
             <Button
               variant="contained"
               onClick={handleSaveProfile}
-              disabled={saving || !displayName.trim()}
+              disabled={saving || !username.trim()}
             >
               {saving ? "保存中..." : "保存"}
             </Button>

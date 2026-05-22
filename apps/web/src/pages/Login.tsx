@@ -7,7 +7,7 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
+  const [loginField, setLoginField] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -16,7 +16,7 @@ export default function Login() {
     setLoading(true);
     setError(null);
     try {
-      await login(email, password);
+      await login(loginField, password);
       navigate("/");
     } catch (err: any) {
       setError(err.response?.data?.error || "登录失败");
@@ -33,10 +33,9 @@ export default function Login() {
         </Typography>
         <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
-            label="邮箱"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            label="邮箱 / 用户名"
+            value={loginField}
+            onChange={(e) => setLoginField(e.target.value)}
             required
             fullWidth
             size="small"

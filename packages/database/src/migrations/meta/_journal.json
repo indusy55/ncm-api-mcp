@@ -15,6 +15,13 @@
       "when": 1779418614666,
       "tag": "0001_sticky_stark_industries",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1779423589000,
+      "tag": "0002_add_username",
+      "breakpoints": true
     }
   ]
 }
