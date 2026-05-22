@@ -1,0 +1,23 @@
+{
+  "name": "ncmapi-mcp-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.31.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "db:generate": "turbo --filter @ncm/database db:generate",
+    "db:migrate": "turbo --filter @ncm/database db:migrate"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.3",
+    "turbo": "^2.9.14",
+    "typescript": "^6.0.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["better-sqlite3", "esbuild"]
+  }
+}

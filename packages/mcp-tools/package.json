@@ -1,0 +1,26 @@
+{
+  "name": "@ncm/mcp-tools",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@ncm/api-client": "workspace:*",
+    "zod": "^3.25 || ^4.0"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
