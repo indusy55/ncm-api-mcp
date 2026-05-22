@@ -16,7 +16,7 @@ RUN pnpm install --frozen-lockfile
 
 # ── Build ──
 FROM deps AS builder
-COPY tsconfig.json ./
+COPY tsconfig.base.json ./
 COPY packages/api-client/src ./packages/api-client/src
 COPY packages/auth/src ./packages/auth/src
 COPY packages/database/src ./packages/database/src
