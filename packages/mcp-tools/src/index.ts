@@ -50,6 +50,103 @@ export function registerAllTools(
       call("netease_search", () => ncm.call("cloudsearch", { keywords, type, limit, offset })),
   );
 
+  server.registerTool(
+    "netease_search_suggest",
+    {
+      description: "Use when the user wants autocomplete suggestions or likely matches for a search keyword.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        keywords: z.string().min(1).max(100).describe("Search keywords"),
+        type: z.enum(["mobile", "web"]).default("mobile").describe("Suggestion mode"),
+      },
+    },
+    async ({ keywords, type }) =>
+      call("netease_search_suggest", () => ncm.call("search_suggest", { keywords, type })),
+  );
+
+  server.registerTool(
+    "netease_search_multimatch",
+    {
+      description: "Use when the user wants mixed search matches across multiple content types for one keyword.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        keywords: z.string().min(1).max(100).describe("Search keywords"),
+        type: z.number().int().optional().describe("Optional multimatch type flag"),
+      },
+    },
+    async ({ keywords, type }) =>
+      call("netease_search_multimatch", () => ncm.call("search_multimatch", { keywords, type })),
+  );
+
+  server.registerTool(
+    "netease_search_hot",
+    {
+      description: "Use when the user wants current NetEase hot search keywords.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {},
+    },
+    async () => call("netease_search_hot", () => ncm.call("search_hot")),
+  );
+
+  server.registerTool(
+    "netease_search_hot_detail",
+    {
+      description: "Use when the user wants detailed current NetEase hot search topics.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {},
+    },
+    async () => call("netease_search_hot_detail", () => ncm.call("search_hot_detail")),
+  );
+
+  server.registerTool(
+    "netease_search_default",
+    {
+      description: "Use when the user wants the default NetEase search keyword or placeholder suggestion.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {},
+    },
+    async () => call("netease_search_default", () => ncm.call("search_default")),
+  );
+
+  server.registerTool(
+    "netease_personalized",
+    {
+      description: "Use when the user wants public personalized discovery playlists from NetEase.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        limit: z.number().int().min(1).max(50).default(30),
+      },
+    },
+    async ({ limit }) => call("netease_personalized", () => ncm.call("personalized", { limit })),
+  );
+
+  server.registerTool(
+    "netease_personalized_newsong",
+    {
+      description: "Use when the user wants personalized new song recommendations.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        area: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Optional area code used by the upstream API"),
+        limit: z.number().int().min(1).max(50).default(10),
+      },
+    },
+    async ({ area, limit }) =>
+      call("netease_personalized_newsong", () => ncm.call("personalized_newsong", { area, limit })),
+  );
+
+  server.registerTool(
+    "netease_personalized_mv",
+    {
+      description: "Use when the user wants recommended personalized MVs.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {},
+    },
+    async () => call("netease_personalized_mv", () => ncm.call("personalized_mv")),
+  );
+
   // ── User Info ──
   server.registerTool(
     "netease_user_info",
@@ -94,6 +191,56 @@ export function registerAllTools(
     async ({ id, br }) => call("netease_song_url", () => ncm.call("song_url", { id, br })),
   );
 
+  server.registerTool(
+    "netease_song_url_v1",
+    {
+      description: "Use when song IDs are known and the user wants playable song URLs by named sound quality level.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Song ID"),
+        level: z
+          .enum(["standard", "exhigh", "lossless", "hires", "jyeffect", "jymaster", "sky"])
+          .default("standard")
+          .describe("Requested sound quality level"),
+      },
+    },
+    async ({ id, level }) =>
+      call("netease_song_url_v1", () => ncm.call("song_url_v1", { id, level })),
+  );
+
+  server.registerTool(
+    "netease_song_download_url",
+    {
+      description: "Use when song IDs are known and the user wants a download-oriented song URL endpoint.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Song ID"),
+        br: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Optional bitrate hint"),
+      },
+    },
+    async ({ id, br }) =>
+      call("netease_song_download_url", () => ncm.call("song_download_url", { id, br })),
+  );
+
+  server.registerTool(
+    "netease_check_music",
+    {
+      description: "Use when the user wants to know whether a song is currently playable or available.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Song ID"),
+        br: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Optional bitrate hint for availability checks"),
+      },
+    },
+    async ({ id, br }) => call("netease_check_music", () => ncm.call("check_music", { id, br })),
+  );
+
   // ── Lyric ──
   server.registerTool(
     "netease_lyric",
@@ -105,6 +252,57 @@ export function registerAllTools(
       },
     },
     async ({ id }) => call("netease_lyric", () => ncm.call("lyric", { id })),
+  );
+
+  server.registerTool(
+    "netease_lyric_new",
+    {
+      description: "Use when a song ID is known and the user wants lyric data from the newer NetEase lyric endpoint.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Song ID"),
+      },
+    },
+    async ({ id }) => call("netease_lyric_new", () => ncm.call("lyric_new", { id })),
+  );
+
+  server.registerTool(
+    "netease_simi_song",
+    {
+      description: "Use when a song ID is known and the user wants similar songs.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Song ID"),
+        limit: z.number().int().min(1).max(100).default(50),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ id, limit, offset }) =>
+      call("netease_simi_song", () => ncm.call("simi_song", { id, limit, offset })),
+  );
+
+  server.registerTool(
+    "netease_song_like_check",
+    {
+      description: "Use when a song ID is known and the user wants to know whether the bound NetEase account has liked it. Requires a bound NetEase account.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Song ID"),
+      },
+    },
+    async ({ id }) => call("netease_song_like_check", () => ncm.call("song_like_check", { id })),
+  );
+
+  server.registerTool(
+    "netease_song_creators",
+    {
+      description: "Use when a song ID is known and the user wants creator or contributor information for the song.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Song ID"),
+      },
+    },
+    async ({ id }) => call("netease_song_creators", () => ncm.call("song_creators", { id })),
   );
 
   // ── Playlist Detail ──
@@ -126,6 +324,75 @@ export function registerAllTools(
       call("netease_playlist_detail", () => ncm.call("playlist_detail", { id, s })),
   );
 
+  server.registerTool(
+    "netease_playlist_track_all",
+    {
+      description: "Use when a playlist ID is known and the user wants the full playlist track list with pagination support.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        s: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Optional extra detail flag used by the upstream API"),
+        limit: z.number().int().min(1).max(1000).default(100),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ id, s, limit, offset }) =>
+      call("netease_playlist_track_all", () =>
+        ncm.call("playlist_track_all", { id, s, limit, offset }),
+      ),
+  );
+
+  server.registerTool(
+    "netease_playlist_catlist",
+    {
+      description: "Use when the user wants the full NetEase playlist category list.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {},
+    },
+    async () => call("netease_playlist_catlist", () => ncm.call("playlist_catlist")),
+  );
+
+  server.registerTool(
+    "netease_playlist_category_list",
+    {
+      description: "Use when the user wants playlist category metadata or grouped category information.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {},
+    },
+    async () =>
+      call("netease_playlist_category_list", () => ncm.call("playlist_category_list")),
+  );
+
+  server.registerTool(
+    "netease_playlist_hot",
+    {
+      description: "Use when the user wants current hot playlist tags or popular playlist categories.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {},
+    },
+    async () => call("netease_playlist_hot", () => ncm.call("playlist_hot")),
+  );
+
+  server.registerTool(
+    "netease_playlist_subscribers",
+    {
+      description: "Use when a playlist ID is known and the user wants users who subscribed to that playlist.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        limit: z.number().int().min(1).max(100).default(20),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ id, limit, offset }) =>
+      call("netease_playlist_subscribers", () =>
+        ncm.call("playlist_subscribers", { id, limit, offset }),
+      ),
+  );
+
   // ── Top Playlists ──
   server.registerTool(
     "netease_top_playlist",
@@ -144,6 +411,110 @@ export function registerAllTools(
     },
     async ({ cat, order, limit, offset }) =>
       call("netease_top_playlist", () => ncm.call("top_playlist", { cat, order, limit, offset })),
+  );
+
+  server.registerTool(
+    "netease_top_playlist_highquality",
+    {
+      description: "Use when the user wants featured high-quality NetEase playlists by category.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        cat: z.string().default("全部").describe("Playlist category"),
+        before: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Optional upstream pagination cursor"),
+        limit: z.number().int().min(1).max(100).default(20),
+      },
+    },
+    async ({ cat, before, limit }) =>
+      call("netease_top_playlist_highquality", () =>
+        ncm.call("top_playlist_highquality", { cat, before, limit }),
+      ),
+  );
+
+  server.registerTool(
+    "netease_toplist",
+    {
+      description: "Use when the user wants the NetEase ranking board summary or available chart list.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {},
+    },
+    async () => call("netease_toplist", () => ncm.call("toplist")),
+  );
+
+  server.registerTool(
+    "netease_toplist_detail",
+    {
+      description: "Use when the user wants detailed NetEase ranking board metadata and chart contents.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {},
+    },
+    async () => call("netease_toplist_detail", () => ncm.call("toplist_detail")),
+  );
+
+  server.registerTool(
+    "netease_top_song",
+    {
+      description: "Use when the user wants new songs by region ranking.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        type: z
+          .enum(["0", "7", "96", "16", "8"])
+          .default("0")
+          .describe("Region: 0=all, 7=Chinese, 96=European/American, 16=Korean, 8=Japanese"),
+      },
+    },
+    async ({ type }) => call("netease_top_song", () => ncm.call("top_song", { type })),
+  );
+
+  server.registerTool(
+    "netease_top_album",
+    {
+      description: "Use when the user wants top albums by area and order.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        area: z.enum(["ALL", "ZH", "EA", "KR", "JP"]).default("ALL"),
+        type: z.enum(["hot", "new"]).default("new"),
+        year: z.string().optional().describe("Optional year, such as 2025"),
+        mouth: z.string().optional().describe("Optional month value used by the upstream API"),
+        limit: z.number().int().min(1).max(100).default(20),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ area, type, year, mouth, limit, offset }) =>
+      call("netease_top_album", () =>
+        ncm.call("top_album", { area, type, year, mouth, limit, offset }),
+      ),
+  );
+
+  server.registerTool(
+    "netease_top_artists",
+    {
+      description: "Use when the user wants current popular artists ranking.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        limit: z.number().int().min(1).max(100).default(20),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ limit, offset }) =>
+      call("netease_top_artists", () => ncm.call("top_artists", { limit, offset })),
+  );
+
+  server.registerTool(
+    "netease_top_mv",
+    {
+      description: "Use when the user wants top MVs by region.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        area: z.enum(["全部", "内地", "港台", "欧美", "日本", "韩国"]).default("全部"),
+        limit: z.number().int().min(1).max(100).default(20),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ area, limit, offset }) =>
+      call("netease_top_mv", () => ncm.call("top_mv", { area, limit, offset })),
   );
 
   // ── User Playlists ──
