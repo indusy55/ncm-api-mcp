@@ -58,8 +58,8 @@ function useSteps(navigate: ReturnType<typeof useNavigate>, mcpUrl: string) {
       title: "配置 MCP 客户端",
       content: () => (
         <Box>
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            在 MCP 客户端的配置文件中添加以下配置：
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            在 MCP 客户端的配置文件中添加以下配置。操作步骤：
           </Typography>
 
           <CodeBlock code={JSON.stringify({
@@ -81,10 +81,14 @@ function useSteps(navigate: ReturnType<typeof useNavigate>, mcpUrl: string) {
           <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
             Claude Desktop
           </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+            操作：打开配置文件 → 粘贴以下内容 → 保存 → 重启 Claude
+          </Typography>
           <CodeBlock code={[
-            "# claude_desktop_config.json",
-            "# macOS: ~/Library/Application Support/Claude/",
-            '# Windows: %APPDATA%\\Claude\\',
+            "# 配置文件路径",
+            "# macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",
+            '# Windows: %APPDATA%\\Claude\\claude_desktop_config.json',
+            '# Linux: ~/.config/Claude/claude_desktop_config.json',
             JSON.stringify({
               mcpServers: {
                 "netease-cloud-music": {
@@ -99,8 +103,11 @@ function useSteps(navigate: ReturnType<typeof useNavigate>, mcpUrl: string) {
           <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
             Cursor
           </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+            操作：在项目根目录创建 .cursor/mcp.json → 粘贴以下内容 → 保存 → 重启 Cursor
+          </Typography>
           <CodeBlock code={[
-            "# .cursor/mcp.json",
+            "# .cursor/mcp.json（项目根目录）",
             JSON.stringify({
               mcpServers: {
                 "netease-cloud-music": {
@@ -114,6 +121,9 @@ function useSteps(navigate: ReturnType<typeof useNavigate>, mcpUrl: string) {
 
           <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
             Windsurf
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+            操作：打开 mcp_config.json → 粘贴以下内容 → 保存 → 重启 Windsurf
           </Typography>
           <CodeBlock code={[
             "# ~/.codeium/windsurf/mcp_config.json",
@@ -130,6 +140,9 @@ function useSteps(navigate: ReturnType<typeof useNavigate>, mcpUrl: string) {
 
           <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
             OpenAI Codex CLI
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+            操作：打开 ~/.codex/config.toml → 追加以下内容 → 保存 → 重启 Codex CLI
           </Typography>
           <CodeBlock code={[
             "# ~/.codex/config.toml",
