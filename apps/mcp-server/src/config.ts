@@ -6,6 +6,7 @@ const envSchema = z.object({
   REDIS_URL: z.string().default("redis://localhost:6379"),
   MCP_PORT: z.coerce.number().default(3002),
   COOKIE_ENCRYPTION_KEY: z.string().length(64),
+  CORS_ORIGINS: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -1,7 +1,8 @@
 import { Hono } from "hono";
+import { z } from "zod";
 import type { DbClient } from "@ncm/database";
 import { getUserId } from "../middleware/auth.js";
-import { getUser, updateUser, changePassword } from "../services/user-service.js";
+import { getUser, updateUserEmail, updateUser, changePassword } from "../services/user-service.js";
 import { changePasswordSchema } from "../validators/auth.js";
 import { updateUserSchema } from "../validators/users.js";
 
@@ -20,6 +21,14 @@ export function createUserRoutes(db: DbClient) {
     const input = updateUserSchema.parse(body);
     const user = await updateUser(db, userId, input);
     return c.json(user);
+  });
+
+  router.put("/me/email", async (c) => {
+    const userId = getUserId(c);
+    const body = await c.req.json();
+    const { email } = z.object({ email: z.string().email() }).parse(body);
+    await updateUserEmail(db, userId, email);
+    return c.json({ success: true });
   });
 
   router.put("/me/password", async (c) => {

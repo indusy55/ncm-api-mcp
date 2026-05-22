@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
-import api from "../api/client.js";
+import api, { setAccessToken } from "../api/client.js";
 
 interface User {
   id: string;
@@ -24,58 +24,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = useCallback(async () => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+  // On mount, try to restore session via HttpOnly refreshToken cookie
+  const restoreSession = useCallback(async () => {
     try {
-      const res = await api.get("/users/me");
-      setUser(res.data);
+      // refreshToken is sent automatically via HttpOnly cookie
+      const res = await api.post("/auth/refresh");
+      const { user: userData, accessToken } = res.data;
+      setAccessToken(accessToken);
+      setUser(userData);
     } catch {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
+      // No valid session — stay logged out
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+    restoreSession();
+  }, [restoreSession]);
+
+  const afterAuth = useCallback((userData: User, accessToken: string) => {
+    setAccessToken(accessToken);
+    setUser(userData);
+  }, []);
 
   const login = useCallback(async (login: string, password: string) => {
     const res = await api.post("/auth/login", { login, password });
-    const { user: userData, accessToken, refreshToken } = res.data;
-    localStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
-    setUser(userData);
-  }, []);
+    const { user: userData, accessToken } = res.data;
+    afterAuth(userData, accessToken);
+  }, [afterAuth]);
 
   const register = useCallback(
     async (email: string, password: string, username: string) => {
       const res = await api.post("/auth/register", { email, password, username });
-      const { user: userData, accessToken, refreshToken } = res.data;
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-      setUser(userData);
+      const { user: userData, accessToken } = res.data;
+      afterAuth(userData, accessToken);
     },
-    [],
+    [afterAuth],
   );
 
   const logout = useCallback(() => {
-    const refreshToken = localStorage.getItem("refreshToken");
-    if (refreshToken) {
-      api.post("/auth/logout", { refreshToken }).catch(() => {});
-    }
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+    api.post("/auth/logout").catch(() => {});
+    setAccessToken(null);
     setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser: fetchUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser: restoreSession }}>
       {children}
     </AuthContext.Provider>
   );

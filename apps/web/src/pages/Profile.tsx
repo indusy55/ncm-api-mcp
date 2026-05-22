@@ -56,7 +56,7 @@ export default function Profile() {
     if (!email.trim() || !user) return;
     setSavingEmail(true);
     try {
-      await api.put(`/admin/users/${user.id}/email`, { email });
+      await api.put("/users/me/email", { email });
       await refreshUser();
       showSnackbar("success", "邮箱已更新");
     } catch (err: any) {
@@ -108,28 +108,22 @@ export default function Profile() {
           ) : undefined}
         />
         <CardContent>
-          {user?.role === "admin" ? (
-            <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start", mb: 2 }}>
-              <TextField
-                label="邮箱"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                size="small"
-                sx={{ flexGrow: 1 }}
-              />
-              <Button
-                variant="contained"
-                onClick={handleSaveEmail}
-                disabled={savingEmail || !email.trim()}
-              >
-                {savingEmail ? "保存中..." : "保存"}
-              </Button>
-            </Box>
-          ) : (
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              邮箱: {user?.email}
-            </Typography>
-          )}
+          <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start", mb: 2 }}>
+            <TextField
+              label="邮箱"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              size="small"
+              sx={{ flexGrow: 1 }}
+            />
+            <Button
+              variant="contained"
+              onClick={handleSaveEmail}
+              disabled={savingEmail || !email.trim()}
+            >
+              {savingEmail ? "保存中..." : "保存"}
+            </Button>
+          </Box>
           <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
             <TextField
               label="用户名"

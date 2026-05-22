@@ -175,72 +175,66 @@ export async function refreshTokensAction(
     throw new AppError(401, "Invalid refresh token");
   }
 
-  // Check token exists in DB (not revoked)
-  const storedToken = await db
-    .select()
-    .from(refreshTokens)
-    .where(eq(refreshTokens.tokenHash, hashRefreshToken(refreshToken)))
-    .get();
+  // Run DB operations in a sync transaction (better-sqlite3 doesn't support async transactions)
+  const user = db.transaction((tx) => {
+    const storedToken = tx
+      .select()
+      .from(refreshTokens)
+      .where(eq(refreshTokens.tokenHash, hashRefreshToken(refreshToken)))
+      .get();
 
-  if (!storedToken) {
-    throw new AppError(401, "Refresh token revoked");
-  }
+    if (!storedToken) {
+      throw new AppError(401, "Refresh token revoked");
+    }
 
-  if (storedToken.expiresAt <= new Date()) {
-    await db
-      .delete(refreshTokens)
-      .where(eq(refreshTokens.id, storedToken.id));
-    throw new AppError(401, "Refresh token expired");
-  }
+    if (storedToken.expiresAt <= new Date()) {
+      tx.delete(refreshTokens).where(eq(refreshTokens.id, storedToken.id)).run();
+      throw new AppError(401, "Refresh token expired");
+    }
 
-  await cleanupExpiredRefreshTokens(db);
+    // Delete old token
+    tx.delete(refreshTokens).where(eq(refreshTokens.id, storedToken.id)).run();
 
-  // Delete old refresh token
-  await db
-    .delete(refreshTokens)
-    .where(eq(refreshTokens.id, storedToken.id));
+    // Get user
+    const u = tx.select().from(users).where(eq(users.id, payload.sub)).get();
+    if (!u) {
+      throw new AppError(401, "User not found");
+    }
 
-  // Get user
-  const user = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, payload.sub))
-    .get();
+    return u;
+  });
 
-  if (!user) {
-    throw new AppError(401, "User not found");
-  }
-
-  // Issue new tokens
+  // Sign tokens outside transaction (async JWT operations)
   const accessToken = await signAccessToken(
-    user.id,
-    user.email,
+    user!.id,
+    user!.email,
     env.JWT_SECRET,
     env.JWT_ACCESS_EXPIRES_IN,
   );
 
   const { token: newRefreshToken } = await signRefreshToken(
-    user.id,
+    user!.id,
     env.JWT_SECRET,
     env.JWT_REFRESH_EXPIRES_IN,
   );
 
+  // Insert new token
   const expiresAt = new Date(
     Date.now() + parseDurationMs(env.JWT_REFRESH_EXPIRES_IN),
   );
-  await db.insert(refreshTokens).values({
-    userId: user.id,
+  db.insert(refreshTokens).values({
+    userId: user!.id,
     tokenHash: hashRefreshToken(newRefreshToken),
     expiresAt,
-  });
+  }).run();
 
   return {
     user: {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      avatarUrl: user.avatarUrl,
-      role: user.role,
+      id: user!.id,
+      email: user!.email,
+      username: user!.username,
+      avatarUrl: user!.avatarUrl,
+      role: user!.role,
     },
     accessToken,
     refreshToken: newRefreshToken,

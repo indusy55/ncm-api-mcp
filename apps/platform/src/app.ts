@@ -55,11 +55,17 @@ export async function createApp() {
   await seedInitialAdmin(db, env);
   await cleanupExpiredRefreshTokens(db);
 
-  await setSettingIfMissing(db, "allow_registration", "false").catch(() => {});
+  await setSettingIfMissing(db, "allow_registration", "false").catch((err) => {
+    console.error("[Seed] Failed to set default settings:", err);
+  });
 
   const app = new Hono();
 
-  app.use("*", cors());
+  app.use("*", cors(
+    env.NODE_ENV === "production" && env.CORS_ORIGINS
+      ? { origin: env.CORS_ORIGINS.split(","), credentials: true }
+      : {},
+  ));
   app.onError(errorHandler);
 
   // Proxy /mcp to the MCP server (for dev without nginx)

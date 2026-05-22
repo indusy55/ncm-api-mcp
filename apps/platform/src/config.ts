@@ -13,6 +13,7 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
   COOKIE_ENCRYPTION_KEY: z.string().length(64),
   MCP_SERVER_URL: z.string().optional(),
+  CORS_ORIGINS: z.string().optional(),
   INITIAL_ADMIN_EMAIL: optionalEnvString(z.string().email()),
   INITIAL_ADMIN_USERNAME: optionalEnvString(
     z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/),

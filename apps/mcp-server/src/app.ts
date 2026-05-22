@@ -12,7 +12,11 @@ export function createMcpApp() {
 
   const app = new Hono();
 
-  app.use("*", cors());
+  app.use("*", cors(
+    env.NODE_ENV === "production" && env.CORS_ORIGINS
+      ? { origin: env.CORS_ORIGINS.split(","), credentials: true }
+      : {},
+  ));
   app.onError(errorHandler);
 
   // Health check (no auth)
