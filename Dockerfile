@@ -21,11 +21,17 @@ RUN pnpm install --frozen-lockfile
 # ── Build ──
 FROM deps AS builder
 COPY tsconfig.base.json ./
+COPY packages/api-client/tsconfig.json packages/api-client/
 COPY packages/api-client/src ./packages/api-client/src
+COPY packages/auth/tsconfig.json packages/auth/
 COPY packages/auth/src ./packages/auth/src
+COPY packages/database/tsconfig.json packages/database/
 COPY packages/database/src ./packages/database/src
+COPY packages/mcp-tools/tsconfig.json packages/mcp-tools/
 COPY packages/mcp-tools/src ./packages/mcp-tools/src
+COPY apps/platform/tsconfig.json apps/platform/
 COPY apps/platform/src ./apps/platform/src
+COPY apps/mcp-server/tsconfig.json apps/mcp-server/
 COPY apps/mcp-server/src ./apps/mcp-server/src
 COPY apps/web/src ./apps/web/src
 COPY apps/web/index.html ./apps/web/
