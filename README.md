@@ -50,6 +50,16 @@ docker compose up -d
 
 访问 `http://localhost` 进入管理界面。
 
+首次使用时没有默认账号。打开管理界面注册第一个用户，该用户会自动成为管理员。后续是否允许普通用户注册，由后台设置中的注册开关控制。
+
+如果想在首次启动时直接创建管理员，可以在 `.env` 中额外配置：
+
+```env
+INITIAL_ADMIN_EMAIL=admin@example.com
+INITIAL_ADMIN_USERNAME=admin
+INITIAL_ADMIN_PASSWORD=<至少8位密码>
+```
+
 ## 使用
 
 1. 打开管理界面 → 注册/登录
@@ -99,20 +109,15 @@ bearer_token_env_var = "NCM_API_KEY"
 
 然后设置环境变量：`export NCM_API_KEY=ncm_你的密钥`
 
-## 默认管理员
-
-首次启动自动创建，请尽快修改密码。
-
-| 用户名 | 密码 |
-|--------|------|
-| admin | admin123 |
-
 ## 环境变量
 
-| 变量 | 说明 |
-|------|------|
-| `JWT_SECRET` | JWT 签名密钥，至少 32 字符 |
-| `COOKIE_ENCRYPTION_KEY` | 加密密钥，`openssl rand -hex 32` 生成 |
+| 变量 | 必填 | 说明 |
+|------|------|------|
+| `JWT_SECRET` | 是 | JWT 签名密钥，至少 32 字符 |
+| `COOKIE_ENCRYPTION_KEY` | 是 | 加密密钥，64 位 hex 字符串，用 `openssl rand -hex 32` 生成 |
+| `INITIAL_ADMIN_EMAIL` | 否 | 首次启动且数据库中没有管理员时，用于创建初始管理员 |
+| `INITIAL_ADMIN_USERNAME` | 否 | 首次启动且数据库中没有管理员时，用于创建初始管理员 |
+| `INITIAL_ADMIN_PASSWORD` | 否 | 首次启动且数据库中没有管理员时，用于创建初始管理员，至少 8 字符 |
 
 ## License
 
