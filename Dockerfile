@@ -2,8 +2,12 @@ FROM node:20-alpine AS base
 RUN corepack enable && corepack prepare pnpm@10.31.0 --activate
 WORKDIR /app
 
+# ── Build environment (python3 + build-base for native modules like better-sqlite3) ──
+FROM base AS build-env
+RUN apk add --no-cache python3 build-base
+
 # ── Dependencies ──
-FROM base AS deps
+FROM build-env AS deps
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY packages/api-client/package.json packages/api-client/
 COPY packages/auth/package.json packages/auth/
