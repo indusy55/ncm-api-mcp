@@ -14,11 +14,11 @@ services:
       - redis
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=/data/mcp-server.db
+      - DATABASE_URL=/data/platform.db
       - REDIS_URL=redis://redis:6379
       - COOKIE_ENCRYPTION_KEY=${COOKIE_ENCRYPTION_KEY}
     volumes:
-      - mcp-server-data:/data
+      - platform-data:/data
 
   platform:
     build:
@@ -53,5 +53,4 @@ services:
 
 volumes:
   redis-data:
-  mcp-server-data:
   platform-data:

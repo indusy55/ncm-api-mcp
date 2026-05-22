@@ -4,6 +4,7 @@ import { neteaseAccounts } from "./netease-accounts";
 import { apiKeys } from "./api-keys";
 import { apiKeyLogs } from "./api-key-logs";
 import { refreshTokens } from "./refresh-tokens";
+import { settings } from "./settings";
 
 export const usersRelations = relations(users, ({ one, many }) => ({
   neteaseAccount: one(neteaseAccounts, {
@@ -43,5 +44,5 @@ export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
   }),
 }));
 
-export { users, neteaseAccounts, apiKeys, apiKeyLogs, refreshTokens };
+export { users, neteaseAccounts, apiKeys, apiKeyLogs, refreshTokens, settings };
 export type { NeteaseAccountStatus } from "./netease-accounts";

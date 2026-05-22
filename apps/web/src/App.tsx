@@ -12,6 +12,7 @@ const AccountBinding = lazy(() => import("./pages/AccountBinding.js"));
 const ApiKeys = lazy(() => import("./pages/ApiKeys.js"));
 const McpSetup = lazy(() => import("./pages/McpSetup.js"));
 const Profile = lazy(() => import("./pages/Profile.js"));
+const AdminUsers = lazy(() => import("./pages/AdminUsers.js"));
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
             <Route path="/account/keys" element={<ApiKeys />} />
             <Route path="/mcp-setup" element={<McpSetup />} />
             <Route path="/account/profile" element={<Profile />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

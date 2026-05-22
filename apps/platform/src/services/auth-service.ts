@@ -10,10 +10,11 @@ import {
   verifyRefreshToken,
 } from "@ncm/auth";
 import { AppError } from "../middleware/error.js";
+import { getSetting } from "./settings-service.js";
 import type { Env } from "../config.js";
 
 export interface AuthResult {
-  user: { id: string; email: string; username: string; avatarUrl: string | null };
+  user: { id: string; email: string; username: string; avatarUrl: string | null; role: "admin" | "user" };
   accessToken: string;
   refreshToken: string;
 }
@@ -23,6 +24,11 @@ export async function registerUser(
   env: Env,
   input: { email: string; password: string; username: string },
 ): Promise<AuthResult> {
+  const allowRegistration = await getSetting(db, "allow_registration");
+  if (allowRegistration === "false") {
+    throw new AppError(403, "Registration is disabled");
+  }
+
   const existingEmail = await db
     .select()
     .from(users)
@@ -85,6 +91,7 @@ export async function registerUser(
       email: user!.email,
       username: user!.username,
       avatarUrl: user!.avatarUrl,
+      role: user!.role,
     },
     accessToken,
     refreshToken,
@@ -139,6 +146,7 @@ export async function loginUser(
       email: user.email,
       username: user.username,
       avatarUrl: user.avatarUrl,
+      role: user.role,
     },
     accessToken,
     refreshToken,
@@ -213,6 +221,7 @@ export async function refreshTokensAction(
       email: user.email,
       username: user.username,
       avatarUrl: user.avatarUrl,
+      role: user.role,
     },
     accessToken,
     refreshToken: newRefreshToken,

@@ -7,11 +7,12 @@ import {
   TextField,
   Button,
   Typography,
-  Divider,
+  Chip,
   Snackbar,
   Alert,
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import api from "../api/client.js";
 import { useAuth } from "../contexts/AuthContext.js";
 
@@ -19,6 +20,8 @@ export default function Profile() {
   const { user, refreshUser } = useAuth();
   const [username, setUsername] = useState(user?.username ?? "");
   const [saving, setSaving] = useState(false);
+  const [email, setEmail] = useState(user?.email ?? "");
+  const [savingEmail, setSavingEmail] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -46,6 +49,20 @@ export default function Profile() {
       showSnackbar("error", err.response?.data?.error || "更新失败");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveEmail = async () => {
+    if (!email.trim() || !user) return;
+    setSavingEmail(true);
+    try {
+      await api.put(`/admin/users/${user.id}/email`, { email });
+      await refreshUser();
+      showSnackbar("success", "邮箱已更新");
+    } catch (err: any) {
+      showSnackbar("error", err.response?.data?.error || "更新邮箱失败");
+    } finally {
+      setSavingEmail(false);
     }
   };
 
@@ -84,11 +101,35 @@ export default function Profile() {
 
       {/* Profile Info */}
       <Card variant="outlined" sx={{ mb: 3 }}>
-        <CardHeader title="基本信息" />
+        <CardHeader
+          title="基本信息"
+          action={user?.role === "admin" ? (
+            <Chip icon={<AdminPanelSettingsIcon />} label="管理员" color="primary" size="small" />
+          ) : undefined}
+        />
         <CardContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            邮箱: {user?.email}
-          </Typography>
+          {user?.role === "admin" ? (
+            <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start", mb: 2 }}>
+              <TextField
+                label="邮箱"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                size="small"
+                sx={{ flexGrow: 1 }}
+              />
+              <Button
+                variant="contained"
+                onClick={handleSaveEmail}
+                disabled={savingEmail || !email.trim()}
+              >
+                {savingEmail ? "保存中..." : "保存"}
+              </Button>
+            </Box>
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              邮箱: {user?.email}
+            </Typography>
+          )}
           <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
             <TextField
               label="用户名"

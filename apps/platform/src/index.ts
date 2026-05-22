@@ -11,7 +11,7 @@ process.on("uncaughtException", (err) => {
 });
 
 const env = getEnv();
-const app = createApp();
+const app = await createApp();
 
 serve(
   {

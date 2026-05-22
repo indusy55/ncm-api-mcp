@@ -10,6 +10,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import KeyIcon from "@mui/icons-material/Key";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
+import SupervisedUserCircleIcon from "@mui/icons-material/SupervisedUserCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.js";
@@ -21,6 +22,7 @@ const DRAWER_WIDTH = 200;
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   const menuItems = [
     { key: "/", label: "控制台", icon: <DashboardIcon /> },
@@ -28,6 +30,10 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     { key: "/account/bind", label: "网易云账号", icon: <PersonIcon /> },
     { key: "/account/keys", label: "API 密钥", icon: <KeyIcon /> },
     { key: "/mcp-setup", label: "MCP 配置", icon: <MenuBookIcon /> },
+  ];
+
+  const adminItems = [
+    { key: "/admin/users", label: "用户管理", icon: <SupervisedUserCircleIcon /> },
   ];
 
   return (
@@ -53,6 +59,31 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           </ListItem>
         ))}
       </List>
+      {user?.role === "admin" && (
+        <>
+          <Box sx={{ px: 2, py: 0.5 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>管理</Typography>
+          </Box>
+          <List>
+            {adminItems.map((item) => (
+              <ListItem key={item.key} disablePadding>
+                <ListItemButton
+                  selected={location.pathname === item.key}
+                  onClick={() => {
+                    navigate(item.key);
+                    onNavigate?.();
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText primary={item.label} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </>
+      )}
     </Box>
   );
 }
