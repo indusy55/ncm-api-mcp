@@ -9,14 +9,30 @@ export function jwtAuth(secret: string) {
   return jwt({ secret, alg: "HS256" });
 }
 
+function getJwtPayload(c: Context): Record<string, unknown> {
+  const payload = c.get("jwtPayload");
+  if (!payload || typeof payload !== "object") {
+    throw new AppError(401, "Not authenticated");
+  }
+  return payload as Record<string, unknown>;
+}
+
 export function getUserId(c: Context): string {
-  const payload = c.get("jwtPayload") as { sub: string };
-  return payload.sub;
+  const payload = getJwtPayload(c);
+  const sub = payload.sub;
+  if (typeof sub !== "string") {
+    throw new AppError(401, "Invalid token payload");
+  }
+  return sub;
 }
 
 export function getUserEmail(c: Context): string {
-  const payload = c.get("jwtPayload") as { email: string };
-  return payload.email;
+  const payload = getJwtPayload(c);
+  const email = payload.email;
+  if (typeof email !== "string") {
+    throw new AppError(401, "Invalid token payload");
+  }
+  return email;
 }
 
 export function requireAdmin(db: DbClient) {

@@ -1,5 +1,5 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
-import { apiKeys } from "./api-keys";
+import { apiKeys } from "./api-keys.js";
 
 export const apiKeyLogs = sqliteTable("api_key_logs", {
   id: text("id")

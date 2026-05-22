@@ -44,28 +44,24 @@ RUN pnpm --filter @ncm/api-client build && \
     pnpm --filter @ncm/platform build && \
     pnpm --filter @ncm/mcp-server build && \
     pnpm --filter @ncm/web build
-RUN rm -rf node_modules packages/*/node_modules apps/*/node_modules
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm deploy --legacy --filter @ncm/platform /tmp/deploy-platform && \
+    pnpm deploy --legacy --filter @ncm/mcp-server /tmp/deploy-mcp-server
 
 # ── Platform runtime ──
 FROM base AS platform
 RUN apk add --no-cache tini
 ENTRYPOINT ["tini", "--"]
 WORKDIR /app
-COPY --from=builder /app/apps/platform/dist ./apps/platform/dist
+COPY --from=builder /tmp/deploy-platform .
 COPY --from=builder /app/apps/web/dist ./apps/web/dist
-COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/node_modules ./node_modules
 EXPOSE 3001
-CMD ["node", "apps/platform/dist/index.js"]
+CMD ["node", "dist/index.js"]
 
 # ── MCP Server runtime ──
 FROM base AS mcp-server
 RUN apk add --no-cache tini
 ENTRYPOINT ["tini", "--"]
 WORKDIR /app
-COPY --from=builder /app/apps/mcp-server/dist ./apps/mcp-server/dist
-COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /tmp/deploy-mcp-server .
 EXPOSE 3002
-CMD ["node", "apps/mcp-server/dist/index.js"]
+CMD ["node", "dist/index.js"]

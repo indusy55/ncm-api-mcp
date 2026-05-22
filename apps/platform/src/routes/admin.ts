@@ -3,7 +3,6 @@ import type { DbClient } from "@ncm/database";
 import type { Env } from "../config.js";
 import { requireAdmin } from "../middleware/auth.js";
 import { listAllUsers, getUserById, updateUserEmail, deleteUser } from "../services/user-service.js";
-import { restartNeteaseApi } from "../services/netease-service.js";
 import { getAllSettings, setSetting } from "../services/settings-service.js";
 
 export function createAdminRoutes(db: DbClient, env: Env) {
@@ -36,12 +35,6 @@ export function createAdminRoutes(db: DbClient, env: Env) {
   router.delete("/users/:id", async (c) => {
     await deleteUser(db, c.req.param("id"));
     return c.json({ success: true });
-  });
-
-  // NCM API restart
-  router.post("/restart-api", async (c) => {
-    const result = restartNeteaseApi();
-    return c.json(result);
   });
 
   // Settings

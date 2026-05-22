@@ -5,11 +5,9 @@ import {
   Paper, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Snackbar, Alert, Card, CardContent, Switch, FormControlLabel,
 } from "@mui/material";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import DeleteIcon from "@mui/icons-material/Delete";
 import api from "../api/client.js";
-import { useAuth } from "../contexts/AuthContext.js";
 
 interface User {
   id: string;
@@ -21,7 +19,6 @@ interface User {
 }
 
 export default function AdminUsers() {
-  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
@@ -66,15 +63,6 @@ export default function AdminUsers() {
     fetchSettings();
   }, [fetchUsers, fetchSettings]);
 
-  const handleRestartApi = async () => {
-    try {
-      await api.post("/admin/restart-api");
-      showSnackbar("success", "NCM API 已重启");
-    } catch (err: any) {
-      showSnackbar("error", err.response?.data?.error || "重启失败");
-    }
-  };
-
   const handleDeleteUser = async () => {
     if (!deleteTarget) return;
     try {
@@ -83,8 +71,11 @@ export default function AdminUsers() {
       setDeleteOpen(false);
       setDeleteTarget(null);
       fetchUsers();
-    } catch (err: any) {
-      showSnackbar("error", err.response?.data?.error || "删除失败");
+    } catch (err) {
+      const msg = err && typeof err === "object" && "response" in err
+        ? (err as any).response?.data?.error || "删除失败"
+        : "删除失败";
+      showSnackbar("error", msg);
     }
   };
 
@@ -95,8 +86,8 @@ export default function AdminUsers() {
       showSnackbar("success", "邮箱已更新");
       setEditingEmail(null);
       fetchUsers();
-    } catch (err: any) {
-      showSnackbar("error", err.response?.data?.error || "更新邮箱失败");
+    } catch {
+      showSnackbar("error", "更新邮箱失败");
     }
   };
 
@@ -116,21 +107,6 @@ export default function AdminUsers() {
       <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
         <AdminPanelSettingsIcon /> 管理
       </Typography>
-
-      {/* NCM API Management */}
-      <Card variant="outlined" sx={{ mb: 3 }}>
-        <CardContent sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Box>
-            <Typography sx={{ fontWeight: 600 }}>NCM API 管理</Typography>
-            <Typography variant="body2" color="text.secondary">
-              重启网易云 API 模块以应用配置变更
-            </Typography>
-          </Box>
-          <Button variant="contained" startIcon={<RefreshIcon />} onClick={handleRestartApi}>
-            重启
-          </Button>
-        </CardContent>
-      </Card>
 
       {/* Settings */}
       {settingsLoaded && (

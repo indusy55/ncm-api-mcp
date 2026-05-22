@@ -27,7 +27,6 @@ services:
     restart: always
     depends_on:
       - redis
-      - mcp-server
     environment:
       - NODE_ENV=production
       - DATABASE_URL=/data/platform.db

@@ -3,7 +3,8 @@ import { cors } from "hono/cors";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { proxy } from "hono/proxy";
 import { eq } from "drizzle-orm";
-import { createDbClient } from "@ncm/database";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
+import { createDbClient, migrationsFolder } from "@ncm/database";
 import { users } from "@ncm/database/schema";
 import { getEnv } from "./config.js";
 import { errorHandler } from "./middleware/error.js";
@@ -38,6 +39,7 @@ export async function createApp() {
   const env = getEnv();
   const db = createDbClient(env.DATABASE_URL);
 
+  migrate(db, { migrationsFolder });
   await seedAdmin(db);
 
   // Seed default settings

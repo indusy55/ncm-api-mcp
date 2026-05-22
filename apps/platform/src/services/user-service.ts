@@ -31,14 +31,7 @@ export async function getUser(db: DbClient, userId: string) {
 
 export async function listAllUsers(db: DbClient) {
   const rows = await db.select().from(users).all();
-  return rows.map((u) => ({
-    id: u.id,
-    email: u.email,
-    username: u.username,
-    avatarUrl: u.avatarUrl,
-    role: u.role,
-    createdAt: u.createdAt,
-  }));
+  return rows.map(toUser);
 }
 
 export async function getUserById(db: DbClient, id: string) {
@@ -52,47 +45,32 @@ export async function getUserById(db: DbClient, id: string) {
     throw new AppError(404, "User not found");
   }
 
-  return {
-    id: user.id,
-    email: user.email,
-    username: user.username,
-    avatarUrl: user.avatarUrl,
-    role: user.role,
-    createdAt: user.createdAt,
-  };
+  return toUser(user);
 }
 
 export async function updateUserEmail(db: DbClient, id: string, email: string) {
-  const user = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, id))
-    .get();
-
-  if (!user) {
-    throw new AppError(404, "User not found");
-  }
-
-  await db
+  const result = await db
     .update(users)
     .set({ email })
-    .where(eq(users.id, id));
+    .where(eq(users.id, id))
+    .returning()
+    .get();
+
+  if (!result) {
+    throw new AppError(404, "User not found");
+  }
 }
 
 export async function deleteUser(db: DbClient, id: string) {
-  const user = await db
-    .select()
-    .from(users)
+  const result = await db
+    .delete(users)
     .where(eq(users.id, id))
+    .returning()
     .get();
 
-  if (!user) {
+  if (!result) {
     throw new AppError(404, "User not found");
   }
-
-  await db
-    .delete(users)
-    .where(eq(users.id, id));
 }
 
 export async function updateUser(

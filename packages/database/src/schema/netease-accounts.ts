@@ -1,5 +1,5 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
-import { users } from "./users";
+import { users } from "./users.js";
 
 export const neteaseAccountStatus = ["active", "expired"] as const;
 export type NeteaseAccountStatus = (typeof neteaseAccountStatus)[number];

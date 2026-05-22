@@ -6,35 +6,7 @@
       "idx": 0,
       "version": "6",
       "when": 1779416435773,
-      "tag": "0000_remarkable_mentor",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1779418614666,
-      "tag": "0001_sticky_stark_industries",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1779423589000,
-      "tag": "0002_add_username",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1779430000000,
-      "tag": "0003_add_encrypted_key",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1779440000000,
-      "tag": "0004_drop_key_prefix",
+      "tag": "0000_initial",
       "breakpoints": true
     }
   ]

@@ -7,18 +7,7 @@ import type { Env } from "../config.js";
 import { AppError } from "../middleware/error.js";
 
 const require = createRequire(import.meta.url);
-
-function loadNcmApi() {
-  return require("@neteasecloudmusicapienhanced/api");
-}
-
-let ncm = loadNcmApi();
-
-export function restartNeteaseApi() {
-  delete require.cache[require.resolve("@neteasecloudmusicapienhanced/api")];
-  ncm = loadNcmApi();
-  return { success: true };
-}
+const ncm = require("@neteasecloudmusicapienhanced/api");
 
 export async function createQrKey(): Promise<string> {
   const res = await ncm.login_qr_key({});

@@ -1,5 +1,5 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
-import { users } from "./users";
+import { users } from "./users.js";
 
 export const refreshTokens = sqliteTable("refresh_tokens", {
   id: text("id")
