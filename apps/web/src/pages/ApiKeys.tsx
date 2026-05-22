@@ -57,7 +57,16 @@ function CodeBlock({ code }: { code: string }) {
 
 function ConfigTabs({ keyPrefix, fullKey, onCopy }: { keyPrefix: string; fullKey?: string; onCopy: (msg: string) => void }) {
   const [tab, setTab] = useState(0);
-  const displayKey = fullKey || `${keyPrefix}...`;
+
+  if (!fullKey) {
+    return (
+      <Alert severity="info">
+        完整密钥仅在创建时显示。如需配置客户端，请创建一个新密钥。
+      </Alert>
+    );
+  }
+
+  const displayKey = fullKey;
 
   const configs = [
     {
