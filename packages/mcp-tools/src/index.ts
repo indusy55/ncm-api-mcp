@@ -305,6 +305,144 @@ export function registerAllTools(
     async ({ id }) => call("netease_song_creators", () => ncm.call("song_creators", { id })),
   );
 
+  server.registerTool(
+    "netease_song_music_detail",
+    {
+      description: "Use when a song ID is known and the user wants song audio quality or technical detail information.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Song ID"),
+      },
+    },
+    async ({ id }) =>
+      call("netease_song_music_detail", () => ncm.call("song_music_detail", { id })),
+  );
+
+  server.registerTool(
+    "netease_song_dynamic_cover",
+    {
+      description: "Use when a song ID is known and the user wants the song's dynamic cover asset information.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Song ID"),
+      },
+    },
+    async ({ id }) =>
+      call("netease_song_dynamic_cover", () => ncm.call("song_dynamic_cover", { id })),
+  );
+
+  server.registerTool(
+    "netease_song_copyright_rcmd",
+    {
+      description: "Use when a song is unavailable or greyed out and the user wants alternative version recommendations.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z
+          .union([z.number(), z.string()])
+          .optional()
+          .describe("Song ID; either id or songid can be used"),
+        songid: z
+          .union([z.number(), z.string()])
+          .optional()
+          .describe("Alternative song ID field supported by the upstream API"),
+      },
+    },
+    async ({ id, songid }) =>
+      call("netease_song_copyright_rcmd", () => ncm.call("song_copyright_rcmd", { id, songid })),
+  );
+
+  server.registerTool(
+    "netease_song_chorus",
+    {
+      description: "Use when a song ID is known and the user wants chorus timing information.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Song ID"),
+      },
+    },
+    async ({ id }) => call("netease_song_chorus", () => ncm.call("song_chorus", { id })),
+  );
+
+  server.registerTool(
+    "netease_song_red_count",
+    {
+      description: "Use when a song ID is known and the user wants the liked or red-heart count for that song.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Song ID"),
+      },
+    },
+    async ({ id }) => call("netease_song_red_count", () => ncm.call("song_red_count", { id })),
+  );
+
+  server.registerTool(
+    "netease_song_wiki_summary",
+    {
+      description: "Use when a song ID is known and the user wants music wiki or background summary information.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Song ID"),
+      },
+    },
+    async ({ id }) => call("netease_song_wiki_summary", () => ncm.call("song_wiki_summary", { id })),
+  );
+
+  server.registerTool(
+    "netease_song_purchased",
+    {
+      description: "Use when the user wants purchased single-song records for the bound NetEase account. Requires a bound NetEase account.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        limit: z.number().int().min(1).max(100).default(20),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ limit, offset }) =>
+      call("netease_song_purchased", () => ncm.call("song_purchased", { limit, offset })),
+  );
+
+  server.registerTool(
+    "netease_song_downlist",
+    {
+      description: "Use when the user wants member download history for songs on the bound NetEase account. Requires a bound NetEase account.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        limit: z.number().int().min(1).max(100).default(20),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ limit, offset }) =>
+      call("netease_song_downlist", () => ncm.call("song_downlist", { limit, offset })),
+  );
+
+  server.registerTool(
+    "netease_song_monthdownlist",
+    {
+      description: "Use when the user wants this month's member download history for songs on the bound NetEase account. Requires a bound NetEase account.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        limit: z.number().int().min(1).max(100).default(20),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ limit, offset }) =>
+      call("netease_song_monthdownlist", () => ncm.call("song_monthdownlist", { limit, offset })),
+  );
+
+  server.registerTool(
+    "netease_song_singledownlist",
+    {
+      description: "Use when the user wants purchased single-song download records for the bound NetEase account. Requires a bound NetEase account.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        limit: z.number().int().min(1).max(100).default(20),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ limit, offset }) =>
+      call("netease_song_singledownlist", () => ncm.call("song_singledownlist", { limit, offset })),
+  );
+
   // ── Playlist Detail ──
   server.registerTool(
     "netease_playlist_detail",
