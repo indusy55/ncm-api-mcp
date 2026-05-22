@@ -121,6 +121,14 @@ build_images() {
         return
     fi
 
+    log_info "标记当前镜像为 prev（用于回滚）..."
+    $COMPOSE_CMD images --format '{{.Repository}}:{{.Tag}}' | sort -u | while read -r img; do
+        if [ -n "$img" ] && [ "$img" != "<none>:<none>" ]; then
+            docker tag "$img" "${img%:*}:prev" 2>/dev/null || true
+        fi
+    done
+    log_ok "旧镜像已标记"
+
     log_info "构建 Docker 镜像..."
     $COMPOSE_CMD build --pull
     log_ok "镜像构建完成"
@@ -152,7 +160,7 @@ deploy_services() {
     $COMPOSE_CMD up -d --remove-orphans --no-deps 2>&1 | tee -a "$LOG_FILE"
     log_ok "容器已启动"
 
-    health_check "platform" "http://localhost:3001/api" || {
+    health_check "platform" "http://localhost/" || {
         log_error "platform 启动失败，触发回滚..."
         rollback
         exit 1
@@ -191,8 +199,18 @@ rollback() {
         log_warn "无可用备份，跳过数据库恢复"
     fi
 
+    log_info "恢复上一版镜像..."
+    $COMPOSE_CMD images --format '{{.Repository}}:{{.Tag}}' | sort -u | while read -r img; do
+        local prev="${img%:*}:prev"
+        if docker image inspect "$prev" >/dev/null 2>&1; then
+            docker tag "$prev" "$img"
+            log_info "  回滚镜像: $img"
+        fi
+    done
+
+    log_info "重启服务..."
     $COMPOSE_CMD up -d --force-recreate 2>&1 | tee -a "$LOG_FILE"
-    health_check "platform" "http://localhost:3001/api"
+    health_check "platform" "http://localhost/"
     log_ok "回滚完成"
 }
 

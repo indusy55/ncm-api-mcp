@@ -143,7 +143,7 @@ export default function AppLayout() {
       )}
 
       <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
-        <AppBar position="static" color="default" elevation={1}>
+        <AppBar position="sticky" color="default" elevation={1} sx={{ zIndex: (theme) => theme.zIndex.appBar }}>
           <Toolbar>
             {isMobile && (
               <IconButton
