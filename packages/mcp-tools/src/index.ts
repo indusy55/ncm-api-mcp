@@ -226,6 +226,23 @@ export function registerAllTools(
   );
 
   server.registerTool(
+    "netease_song_download_url_v1",
+    {
+      description: "Use when song IDs are known and the user wants download URLs by named sound quality level.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Song ID"),
+        level: z
+          .enum(["standard", "exhigh", "lossless", "hires", "jyeffect", "jymaster", "sky"])
+          .default("standard")
+          .describe("Requested sound quality level"),
+      },
+    },
+    async ({ id, level }) =>
+      call("netease_song_download_url_v1", () => ncm.call("song_download_url_v1", { id, level })),
+  );
+
+  server.registerTool(
     "netease_check_music",
     {
       description: "Use when the user wants to know whether a song is currently playable or available.",
@@ -291,6 +308,26 @@ export function registerAllTools(
       },
     },
     async ({ id }) => call("netease_song_like_check", () => ncm.call("song_like_check", { id })),
+  );
+
+  server.registerTool(
+    "netease_song_like",
+    {
+      description: "Use only when the user explicitly asks to like or unlike a song, optionally for a specific NetEase user ID. This changes liked-song state on the bound NetEase account.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Song ID"),
+        uid: z
+          .union([z.number(), z.string()])
+          .optional()
+          .describe("Optional NetEase user UID for the upstream API"),
+        like: z.boolean().default(true).describe("true=like, false=unlike"),
+      },
+    },
+    async ({ id, uid, like }) =>
+      call("netease_song_like", () =>
+        ncm.call("song_like", { id, uid, like: like ? "true" : "false" }),
+      ),
   );
 
   server.registerTool(
@@ -388,6 +425,68 @@ export function registerAllTools(
   );
 
   server.registerTool(
+    "netease_song_lyrics_mark",
+    {
+      description: "Use when a song ID is known and the user wants existing lyric mark or excerpt information for that song.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Song ID"),
+      },
+    },
+    async ({ id }) => call("netease_song_lyrics_mark", () => ncm.call("song_lyrics_mark", { id })),
+  );
+
+  server.registerTool(
+    "netease_song_lyrics_mark_user_page",
+    {
+      description: "Use when the user wants their lyric excerpt notebook or marked lyric items. Requires a bound NetEase account.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        limit: z.number().int().min(1).max(100).default(10),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ limit, offset }) =>
+      call("netease_song_lyrics_mark_user_page", () =>
+        ncm.call("song_lyrics_mark_user_page", { limit, offset }),
+      ),
+  );
+
+  server.registerTool(
+    "netease_song_lyrics_mark_add",
+    {
+      description: "Use only when the user explicitly asks to add or edit lyric excerpt marks. This changes lyric-mark data on the bound NetEase account.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Song ID"),
+        markId: z
+          .union([z.number(), z.string()])
+          .optional()
+          .describe("Existing mark ID when editing a lyric mark"),
+        data: z
+          .string()
+          .describe("JSON string payload for lyric mark items expected by the upstream API"),
+      },
+    },
+    async ({ id, markId, data }) =>
+      call("netease_song_lyrics_mark_add", () => ncm.call("song_lyrics_mark_add", { id, markId, data })),
+  );
+
+  server.registerTool(
+    "netease_song_lyrics_mark_del",
+    {
+      description: "Use only when the user explicitly asks to delete lyric excerpt marks. This changes lyric-mark data on the bound NetEase account.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        id: z
+          .union([z.number(), z.string()])
+          .describe("Mark ID or comma-separated mark IDs to delete, as expected by the upstream API"),
+      },
+    },
+    async ({ id }) => call("netease_song_lyrics_mark_del", () => ncm.call("song_lyrics_mark_del", { id })),
+  );
+
+  server.registerTool(
     "netease_song_purchased",
     {
       description: "Use when the user wants purchased single-song records for the bound NetEase account. Requires a bound NetEase account.",
@@ -460,6 +559,36 @@ export function registerAllTools(
     },
     async ({ id, s }) =>
       call("netease_playlist_detail", () => ncm.call("playlist_detail", { id, s })),
+  );
+
+  server.registerTool(
+    "netease_playlist_detail_dynamic",
+    {
+      description: "Use when a playlist ID is known and the user wants dynamic playlist data such as share, comment, or subscription counts.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        s: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Optional upstream detail flag"),
+      },
+    },
+    async ({ id, s }) =>
+      call("netease_playlist_detail_dynamic", () => ncm.call("playlist_detail_dynamic", { id, s })),
+  );
+
+  server.registerTool(
+    "netease_playlist_detail_rcmd_get",
+    {
+      description: "Use when a playlist ID is known and the user wants related playlist recommendations for that playlist.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+      },
+    },
+    async ({ id }) =>
+      call("netease_playlist_detail_rcmd_get", () => ncm.call("playlist_detail_rcmd_get", { id })),
   );
 
   server.registerTool(
@@ -637,6 +766,26 @@ export function registerAllTools(
   );
 
   server.registerTool(
+    "netease_playlist_update",
+    {
+      description: "Use only when the user explicitly asks to update multiple playlist metadata fields together. This changes playlist metadata on the bound NetEase account.",
+      annotations: writeAnnotations,
+      inputSchema: {
+        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        name: z.string().min(1).max(200).describe("Playlist name"),
+        desc: z.string().max(2000).optional().describe("Optional playlist description"),
+        tags: z
+          .string()
+          .max(200)
+          .optional()
+          .describe("Optional comma-separated playlist tags"),
+      },
+    },
+    async ({ id, name, desc, tags }) =>
+      call("netease_playlist_update", () => ncm.call("playlist_update", { id, name, desc, tags })),
+  );
+
+  server.registerTool(
     "netease_playlist_subscribe",
     {
       description: "Use only when the user explicitly asks to subscribe or unsubscribe a playlist. This changes the bound NetEase account's playlist subscriptions.",
@@ -688,6 +837,26 @@ export function registerAllTools(
       call("netease_playlist_track_delete", () =>
         ncm.call("playlist_tracks", { op: "del", pid, tracks }),
       ),
+  );
+
+  server.registerTool(
+    "netease_playlist_mylike",
+    {
+      description: "Use when the user wants liked playlist-related activity for the bound NetEase account. Requires a bound NetEase account.",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        time: z
+          .union([z.number().int(), z.string()])
+          .optional()
+          .describe("Optional pagination time cursor"),
+        limit: z
+          .union([z.number().int(), z.string()])
+          .default(12)
+          .describe("Result limit"),
+      },
+    },
+    async ({ time, limit }) =>
+      call("netease_playlist_mylike", () => ncm.call("playlist_mylike", { time, limit })),
   );
 
   // ── Top Playlists ──
