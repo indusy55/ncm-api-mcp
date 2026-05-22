@@ -1,6 +1,7 @@
 services:
   redis:
     image: redis:7-alpine
+    container_name: ncm-redis
     restart: always
     volumes:
       - redis-data:/data
@@ -9,6 +10,7 @@ services:
     build:
       context: .
       target: mcp-server
+    container_name: ncm-mcp-server
     restart: always
     depends_on:
       - redis
@@ -24,6 +26,7 @@ services:
     build:
       context: .
       target: platform
+    container_name: ncm-platform
     restart: always
     depends_on:
       - redis
@@ -41,6 +44,7 @@ services:
 
   nginx:
     image: nginx:alpine
+    container_name: ncm-nginx
     restart: always
     ports:
       - "80:80"
