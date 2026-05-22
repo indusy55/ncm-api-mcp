@@ -4,7 +4,7 @@ import { createDbClient } from "@ncm/database";
 import { getEnv } from "./config.js";
 import { errorHandler } from "./middleware/error.js";
 import { apiKeyAuth } from "./middleware/auth.js";
-import { mcpHandler } from "./mcp/handler.js";
+import { createMcpHandler } from "./mcp/handler.js";
 
 export function createMcpApp() {
   const env = getEnv();
@@ -21,7 +21,7 @@ export function createMcpApp() {
   );
 
   // MCP endpoint with API key auth
-  app.all("/mcp", apiKeyAuth(env), mcpHandler);
+  app.all("/mcp", apiKeyAuth(env, db), createMcpHandler(db));
 
   return app;
 }

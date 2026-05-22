@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { eq, lt } from "drizzle-orm";
 import type { DbClient } from "@ncm/database";
 import { users, refreshTokens } from "@ncm/database/schema";
 import {
@@ -25,7 +25,7 @@ export async function registerUser(
   input: { email: string; password: string; username: string },
 ): Promise<AuthResult> {
   const allowRegistration = await getSetting(db, "allow_registration");
-  if (allowRegistration === "false") {
+  if (allowRegistration !== "true") {
     throw new AppError(403, "Registration is disabled");
   }
 
@@ -70,7 +70,7 @@ export async function registerUser(
     env.JWT_ACCESS_EXPIRES_IN,
   );
 
-  const { token: refreshToken, jti } = await signRefreshToken(
+  const { token: refreshToken } = await signRefreshToken(
     user!.id,
     env.JWT_SECRET,
     env.JWT_REFRESH_EXPIRES_IN,
@@ -103,6 +103,8 @@ export async function loginUser(
   env: Env,
   input: { login: string; password: string },
 ): Promise<AuthResult> {
+  await cleanupExpiredRefreshTokens(db);
+
   // Look up by email first, then by username
   const isEmail = input.login.includes("@");
   const user = isEmail
@@ -125,7 +127,7 @@ export async function loginUser(
     env.JWT_ACCESS_EXPIRES_IN,
   );
 
-  const { token: refreshToken, jti } = await signRefreshToken(
+  const { token: refreshToken } = await signRefreshToken(
     user.id,
     env.JWT_SECRET,
     env.JWT_REFRESH_EXPIRES_IN,
@@ -176,6 +178,15 @@ export async function refreshTokensAction(
     throw new AppError(401, "Refresh token revoked");
   }
 
+  if (storedToken.expiresAt <= new Date()) {
+    await db
+      .delete(refreshTokens)
+      .where(eq(refreshTokens.id, storedToken.id));
+    throw new AppError(401, "Refresh token expired");
+  }
+
+  await cleanupExpiredRefreshTokens(db);
+
   // Delete old refresh token
   await db
     .delete(refreshTokens)
@@ -200,7 +211,7 @@ export async function refreshTokensAction(
     env.JWT_ACCESS_EXPIRES_IN,
   );
 
-  const { token: newRefreshToken, jti } = await signRefreshToken(
+  const { token: newRefreshToken } = await signRefreshToken(
     user.id,
     env.JWT_SECRET,
     env.JWT_REFRESH_EXPIRES_IN,
@@ -235,6 +246,12 @@ export async function logoutUser(
   await db
     .delete(refreshTokens)
     .where(eq(refreshTokens.tokenHash, hashRefreshToken(refreshToken)));
+}
+
+export async function cleanupExpiredRefreshTokens(db: DbClient): Promise<void> {
+  await db
+    .delete(refreshTokens)
+    .where(lt(refreshTokens.expiresAt, new Date()));
 }
 
 function hashRefreshToken(token: string): string {

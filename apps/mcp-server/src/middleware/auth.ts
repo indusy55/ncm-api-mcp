@@ -1,10 +1,12 @@
 import { createHash } from "node:crypto";
 import { createMiddleware } from "hono/factory";
 import { eq } from "drizzle-orm";
-import { createDbClient } from "@ncm/database";
-import { apiKeys, users, neteaseAccounts } from "@ncm/database/schema";
+import type { DbClient } from "@ncm/database";
+import { apiKeys } from "@ncm/database/schema";
 import { decryptCookies, deriveEncryptionKey } from "@ncm/auth";
 import type { Env } from "../config.js";
+
+const LAST_USED_UPDATE_INTERVAL_MS = 60_000;
 
 export interface McpContext {
   user: { id: string; email: string };
@@ -23,7 +25,7 @@ declare module "hono" {
   }
 }
 
-export function apiKeyAuth(env: Env) {
+export function apiKeyAuth(env: Env, db: DbClient) {
   return createMiddleware(async (c, next) => {
     const authHeader = c.req.header("authorization");
     if (!authHeader?.startsWith("Bearer ")) {
@@ -32,8 +34,6 @@ export function apiKeyAuth(env: Env) {
 
     const rawKey = authHeader.slice(7);
     const keyHash = createHash("sha256").update(rawKey).digest("hex");
-
-    const db = createDbClient(env.DATABASE_URL);
 
     const keyRecord = await db.query.apiKeys.findFirst({
       where: eq(apiKeys.keyHash, keyHash),
@@ -52,11 +52,20 @@ export function apiKeyAuth(env: Env) {
       return c.json({ error: "API key has expired" }, 401);
     }
 
-    // Update last used (fire-and-forget)
-    db.update(apiKeys)
-      .set({ lastUsedAt: new Date() })
-      .where(eq(apiKeys.id, keyRecord.id))
-      .run();
+    const shouldUpdateLastUsed =
+      !keyRecord.lastUsedAt ||
+      Date.now() - keyRecord.lastUsedAt.getTime() >= LAST_USED_UPDATE_INTERVAL_MS;
+
+    if (shouldUpdateLastUsed) {
+      try {
+        db.update(apiKeys)
+          .set({ lastUsedAt: new Date() })
+          .where(eq(apiKeys.id, keyRecord.id))
+          .run();
+      } catch (err) {
+        console.error("Failed to update API key lastUsedAt:", err);
+      }
+    }
 
     const account = keyRecord.user.neteaseAccount;
     let cookies = "";

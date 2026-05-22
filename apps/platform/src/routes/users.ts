@@ -3,6 +3,7 @@ import type { DbClient } from "@ncm/database";
 import { getUserId } from "../middleware/auth.js";
 import { getUser, updateUser, changePassword } from "../services/user-service.js";
 import { changePasswordSchema } from "../validators/auth.js";
+import { updateUserSchema } from "../validators/users.js";
 
 export function createUserRoutes(db: DbClient) {
   const router = new Hono();
@@ -16,7 +17,8 @@ export function createUserRoutes(db: DbClient) {
   router.put("/me", async (c) => {
     const userId = getUserId(c);
     const body = await c.req.json();
-    const user = await updateUser(db, userId, body);
+    const input = updateUserSchema.parse(body);
+    const user = await updateUser(db, userId, input);
     return c.json(user);
   });
 

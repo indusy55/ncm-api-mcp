@@ -2,6 +2,9 @@ import { eq } from "drizzle-orm";
 import type { DbClient } from "@ncm/database";
 import { settings } from "@ncm/database/schema";
 
+export const knownSettings = ["allow_registration"] as const;
+export type KnownSetting = (typeof knownSettings)[number];
+
 export async function getSetting(db: DbClient, key: string): Promise<string | null> {
   const row = await db
     .select()
@@ -19,6 +22,17 @@ export async function setSetting(db: DbClient, key: string, value: string) {
       target: settings.key,
       set: { value },
     });
+}
+
+export async function setSettingIfMissing(
+  db: DbClient,
+  key: KnownSetting,
+  value: string,
+) {
+  await db
+    .insert(settings)
+    .values({ key, value })
+    .onConflictDoNothing({ target: settings.key });
 }
 
 export async function getAllSettings(db: DbClient) {

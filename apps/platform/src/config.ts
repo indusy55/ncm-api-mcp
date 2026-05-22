@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+const optionalEnvString = (schema: z.ZodString) =>
+  z.preprocess((value) => (value === "" ? undefined : value), schema.optional());
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   DATABASE_URL: z.string().default("./data/platform.db"),
@@ -10,6 +13,11 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
   COOKIE_ENCRYPTION_KEY: z.string().length(64),
   MCP_SERVER_URL: z.string().optional(),
+  INITIAL_ADMIN_EMAIL: optionalEnvString(z.string().email()),
+  INITIAL_ADMIN_USERNAME: optionalEnvString(
+    z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/),
+  ),
+  INITIAL_ADMIN_PASSWORD: optionalEnvString(z.string().min(8)),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -7,12 +7,14 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { createDbClient, migrationsFolder } from "@ncm/database";
 import { users } from "@ncm/database/schema";
 import { getEnv } from "./config.js";
+import type { Env } from "./config.js";
 import { errorHandler } from "./middleware/error.js";
 import { createRoutes } from "./routes/index.js";
 import { hashPassword } from "@ncm/auth";
-import { setSetting } from "./services/settings-service.js";
+import { setSettingIfMissing } from "./services/settings-service.js";
+import { cleanupExpiredRefreshTokens } from "./services/auth-service.js";
 
-async function seedAdmin(db: ReturnType<typeof createDbClient>) {
+async function seedInitialAdmin(db: ReturnType<typeof createDbClient>, env: Env) {
   const existing = await db
     .select()
     .from(users)
@@ -24,15 +26,25 @@ async function seedAdmin(db: ReturnType<typeof createDbClient>) {
     return;
   }
 
-  const passwordHash = await hashPassword("admin");
+  const adminConfigured =
+    env.INITIAL_ADMIN_EMAIL &&
+    env.INITIAL_ADMIN_USERNAME &&
+    env.INITIAL_ADMIN_PASSWORD;
+
+  if (!adminConfigured) {
+    console.log("No admin user exists. Set INITIAL_ADMIN_EMAIL, INITIAL_ADMIN_USERNAME, and INITIAL_ADMIN_PASSWORD to create one.");
+    return;
+  }
+
+  const passwordHash = await hashPassword(env.INITIAL_ADMIN_PASSWORD!);
   await db.insert(users).values({
-    email: "admin@ncm.local",
-    username: "admin",
+    email: env.INITIAL_ADMIN_EMAIL!,
+    username: env.INITIAL_ADMIN_USERNAME!,
     passwordHash,
     role: "admin",
   });
 
-  console.log("Default admin account created: admin / admin (email: admin@ncm.local)");
+  console.log(`Initial admin user created: ${env.INITIAL_ADMIN_USERNAME} (${env.INITIAL_ADMIN_EMAIL})`);
 }
 
 export async function createApp() {
@@ -40,10 +52,10 @@ export async function createApp() {
   const db = createDbClient(env.DATABASE_URL);
 
   await migrate(db, { migrationsFolder });
-  await seedAdmin(db);
+  await seedInitialAdmin(db, env);
+  await cleanupExpiredRefreshTokens(db);
 
-  // Seed default settings
-  await setSetting(db, "allow_registration", "true").catch(() => {});
+  await setSettingIfMissing(db, "allow_registration", "false").catch(() => {});
 
   const app = new Hono();
 

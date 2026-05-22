@@ -4,6 +4,8 @@ import type { Env } from "../config.js";
 import { requireAdmin } from "../middleware/auth.js";
 import { listAllUsers, getUserById, updateUserEmail, deleteUser } from "../services/user-service.js";
 import { getAllSettings, setSetting } from "../services/settings-service.js";
+import { updateUserEmailSchema } from "../validators/users.js";
+import { updateSettingSchema } from "../validators/settings.js";
 
 export function createAdminRoutes(db: DbClient, env: Env) {
   const router = new Hono();
@@ -24,10 +26,7 @@ export function createAdminRoutes(db: DbClient, env: Env) {
 
   router.put("/users/:id/email", async (c) => {
     const body = await c.req.json();
-    const { email } = body;
-    if (!email || typeof email !== "string") {
-      return c.json({ error: "Email is required" }, 400);
-    }
+    const { email } = updateUserEmailSchema.parse(body);
     await updateUserEmail(db, c.req.param("id"), email);
     return c.json({ success: true });
   });
@@ -45,11 +44,8 @@ export function createAdminRoutes(db: DbClient, env: Env) {
 
   router.put("/settings", async (c) => {
     const body = await c.req.json();
-    const { key, value } = body;
-    if (!key || typeof key !== "string") {
-      return c.json({ error: "Key is required" }, 400);
-    }
-    await setSetting(db, key, String(value));
+    const { key, value } = updateSettingSchema.parse(body);
+    await setSetting(db, key, value);
     return c.json({ success: true });
   });
 
