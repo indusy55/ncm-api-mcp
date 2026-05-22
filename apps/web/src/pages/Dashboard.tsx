@@ -27,8 +27,8 @@ export default function Dashboard() {
       <Grid container spacing={2}>
         {/* NetEase Account Status */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card variant="outlined">
-            <CardContent>
+          <Card variant="outlined" sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+            <CardContent sx={{ flexGrow: 1 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
                 <PersonIcon color="primary" />
                 <Typography variant="h6">网易云账号</Typography>
@@ -102,8 +102,8 @@ export default function Dashboard() {
 
         {/* API Key Summary */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card variant="outlined">
-            <CardContent>
+          <Card variant="outlined" sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+            <CardContent sx={{ flexGrow: 1 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
                 <KeyIcon color="primary" />
                 <Typography variant="h6">API 密钥</Typography>

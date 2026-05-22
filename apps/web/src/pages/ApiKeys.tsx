@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box, Button, Typography, Chip, CircularProgress, IconButton,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -15,7 +15,7 @@ import api from "../api/client.js";
 interface ApiKey {
   id: string;
   name: string;
-  keyPrefix: string;
+  fullKey: string | null;
   isActive: boolean;
   lastUsedAt: string | null;
   expiresAt: string | null;
@@ -55,18 +55,8 @@ function CodeBlock({ code }: { code: string }) {
   );
 }
 
-function ConfigTabs({ keyPrefix, fullKey, onCopy }: { keyPrefix: string; fullKey?: string; onCopy: (msg: string) => void }) {
+function ConfigTabs({ fullKey, onCopy }: { fullKey: string; onCopy: (msg: string) => void }) {
   const [tab, setTab] = useState(0);
-
-  if (!fullKey) {
-    return (
-      <Alert severity="info">
-        完整密钥仅在创建时显示。如需配置客户端，请创建一个新密钥。
-      </Alert>
-    );
-  }
-
-  const displayKey = fullKey;
 
   const configs = [
     {
@@ -76,7 +66,7 @@ function ConfigTabs({ keyPrefix, fullKey, onCopy }: { keyPrefix: string; fullKey
           "netease-cloud-music": {
             type: "streamable-http",
             url: mcpUrl,
-            headers: { Authorization: `Bearer ${displayKey}` },
+            headers: { Authorization: `Bearer ${fullKey}` },
           },
         },
       }, null, 2),
@@ -92,7 +82,7 @@ function ConfigTabs({ keyPrefix, fullKey, onCopy }: { keyPrefix: string; fullKey
             "netease-cloud-music": {
               type: "streamable-http",
               url: mcpUrl,
-              headers: { Authorization: `Bearer ${displayKey}` },
+              headers: { Authorization: `Bearer ${fullKey}` },
             },
           },
         }, null, 2),
@@ -107,7 +97,7 @@ function ConfigTabs({ keyPrefix, fullKey, onCopy }: { keyPrefix: string; fullKey
             "netease-cloud-music": {
               type: "streamable-http",
               url: mcpUrl,
-              headers: { Authorization: `Bearer ${displayKey}` },
+              headers: { Authorization: `Bearer ${fullKey}` },
             },
           },
         }, null, 2),
@@ -122,7 +112,7 @@ function ConfigTabs({ keyPrefix, fullKey, onCopy }: { keyPrefix: string; fullKey
             "netease-cloud-music": {
               type: "streamable-http",
               url: mcpUrl,
-              headers: { Authorization: `Bearer ${displayKey}` },
+              headers: { Authorization: `Bearer ${fullKey}` },
             },
           },
         }, null, 2),
@@ -136,7 +126,7 @@ function ConfigTabs({ keyPrefix, fullKey, onCopy }: { keyPrefix: string; fullKey
         "",
         "[mcp_servers.netease-cloud-music]",
         `url = "${mcpUrl}"`,
-        `bearer_token = "${displayKey}"`,
+        `bearer_token = "${fullKey}"`,
         "startup_timeout_sec = 10",
         "tool_timeout_sec = 60",
       ].join("\n"),
@@ -175,6 +165,7 @@ export default function ApiKeys() {
     fullKey: string;
     name: string;
   } | null>(null);
+  const [newKeyResultOpen, setNewKeyResultOpen] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
@@ -182,10 +173,11 @@ export default function ApiKeys() {
     severity: "success",
   });
   const [logKeyId, setLogKeyId] = useState<string | null>(null);
+  const [logKeyIdOpen, setLogKeyIdOpen] = useState(false);
   const [logs, setLogs] = useState<UsageLog[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
-  const [configKey, setConfigKey] = useState<{ id: string; keyPrefix: string; fullKey?: string } | null>(null);
-  const fullKeysRef = useRef<Record<string, string>>({});
+  const [configKey, setConfigKey] = useState<ApiKey | null>(null);
+  const [configKeyOpen, setConfigKeyOpen] = useState(false);
 
   const showSnackbar = (
     severity: SnackbarState["severity"],
@@ -217,8 +209,8 @@ export default function ApiKeys() {
     }
     try {
       const res = await api.post("/keys", { name: newKeyName });
-      fullKeysRef.current[res.data.id] = res.data.fullKey;
       setNewKeyResult(res.data);
+      setNewKeyResultOpen(true);
       setCreateOpen(false);
       setNewKeyName("");
       fetchKeys();
@@ -229,6 +221,7 @@ export default function ApiKeys() {
 
   const handleOpenLogs = async (keyId: string) => {
     setLogKeyId(keyId);
+    setLogKeyIdOpen(true);
     setLogsLoading(true);
     try {
       const res = await api.get<{ logs: UsageLog[] }>(`/keys/${keyId}/logs`);
@@ -240,18 +233,10 @@ export default function ApiKeys() {
     }
   };
 
-  const getFullKey = (key: ApiKey): string | undefined => {
-    return fullKeysRef.current[key.id];
-  };
-
   const handleCopyKey = (key: ApiKey) => {
-    const fullKey = getFullKey(key);
-    if (fullKey) {
-      navigator.clipboard.writeText(fullKey);
+    if (key.fullKey) {
+      navigator.clipboard.writeText(key.fullKey);
       showSnackbar("success", "密钥已复制");
-    } else {
-      navigator.clipboard.writeText(key.keyPrefix);
-      showSnackbar("success", "已复制密钥前缀（完整密钥仅在创建时可见）");
     }
   };
 
@@ -303,7 +288,7 @@ export default function ApiKeys() {
               keys.map((key) => (
                 <Card key={key.id} variant="outlined">
                   <CardContent sx={{ pb: 1 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                       <Typography sx={{ fontWeight: 600, flex: 1 }}>{key.name}</Typography>
                       <Chip
                         label={key.isActive ? "已启用" : "已撤销"}
@@ -311,12 +296,12 @@ export default function ApiKeys() {
                         size="small"
                       />
                     </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Typography
                         component="code"
                         sx={{ fontFamily: "monospace", fontSize: 13, bgcolor: "grey.100", px: 0.5, py: 0.25, borderRadius: 0.5 }}
                       >
-                        {key.keyPrefix}...
+                        {key.fullKey?.substring(0, 8)}...
                       </Typography>
                       <IconButton size="small" onClick={() => handleCopyKey(key)} sx={{ opacity: 0.6 }}>
                         <ContentCopyIcon sx={{ fontSize: 14 }} />
@@ -326,8 +311,8 @@ export default function ApiKeys() {
                       最后使用：{key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleString() : "从未使用"}
                     </Typography>
                   </CardContent>
-                  <Box sx={{ display: "flex", gap: 0.5, px: 1, pb: 1 }}>
-                    <Button size="small" variant="text" startIcon={<SettingsIcon />} onClick={() => setConfigKey({ id: key.id, keyPrefix: key.keyPrefix, fullKey: getFullKey(key) })}>
+                  <Box sx={{ display: "flex", gap: 1, px: 1, pb: 1 }}>
+                    <Button size="small" variant="text" startIcon={<SettingsIcon />} onClick={() => { setConfigKey(key); setConfigKeyOpen(true); }}>
                       配置
                     </Button>
                     <Button size="small" variant="text" startIcon={<HistoryIcon />} onClick={() => handleOpenLogs(key.id)}>
@@ -368,9 +353,9 @@ export default function ApiKeys() {
                     <TableRow key={key.id}>
                       <TableCell sx={{ whiteSpace: "nowrap" }}>{key.name}</TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                           <Typography component="code" sx={{ fontFamily: "monospace", fontSize: 13, bgcolor: "grey.100", px: 0.5, py: 0.25, borderRadius: 0.5 }}>
-                            {key.keyPrefix}...
+                            {key.fullKey?.substring(0, 8)}...
                           </Typography>
                           <IconButton size="small" onClick={() => handleCopyKey(key)} sx={{ opacity: 0.6 }}>
                             <ContentCopyIcon sx={{ fontSize: 14 }} />
@@ -386,8 +371,8 @@ export default function ApiKeys() {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", gap: 0.5 }}>
-                          <Button size="small" variant="text" startIcon={<SettingsIcon />} onClick={() => setConfigKey({ id: key.id, keyPrefix: key.keyPrefix, fullKey: getFullKey(key) })}>配置</Button>
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                          <Button size="small" variant="text" startIcon={<SettingsIcon />} onClick={() => { setConfigKey(key); setConfigKeyOpen(true); }}>配置</Button>
                           <Button size="small" variant="text" startIcon={<HistoryIcon />} onClick={() => handleOpenLogs(key.id)}>日志</Button>
                           {key.isActive && (
                             <Button size="small" variant="outlined" color="error" onClick={() => handleRevoke(key.id)}>撤销</Button>
@@ -427,15 +412,16 @@ export default function ApiKeys() {
 
       {/* New Key Result Dialog */}
       <Dialog
-        open={!!newKeyResult}
-        onClose={() => setNewKeyResult(null)}
+        open={newKeyResultOpen}
+        onClose={() => setNewKeyResultOpen(false)}
         maxWidth="sm"
         fullWidth
+        slotProps={{ transition: { onExited: () => setNewKeyResult(null) } }}
       >
         <DialogTitle>API 密钥已创建</DialogTitle>
         <DialogContent>
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            该密钥仅显示一次，请立即复制！
+          <Alert severity="success" sx={{ mb: 2 }}>
+            密钥已创建成功，请复制并保存好密钥。
           </Alert>
           <Typography variant="body2" sx={{ mb: 1 }}>
             <strong>Name:</strong> {newKeyResult?.name}
@@ -469,16 +455,17 @@ export default function ApiKeys() {
           >
             复制密钥
           </Button>
-          <Button onClick={() => setNewKeyResult(null)}>关闭</Button>
+          <Button onClick={() => setNewKeyResultOpen(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
 
       {/* Usage Log Dialog */}
       <Dialog
-        open={!!logKeyId}
-        onClose={() => setLogKeyId(null)}
+        open={logKeyIdOpen}
+        onClose={() => setLogKeyIdOpen(false)}
         maxWidth="md"
         fullWidth
+        slotProps={{ transition: { onExited: () => setLogKeyId(null) } }}
       >
         <DialogTitle>API 密钥使用日志</DialogTitle>
         <DialogContent>
@@ -523,23 +510,24 @@ export default function ApiKeys() {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setLogKeyId(null)}>关闭</Button>
+          <Button onClick={() => setLogKeyIdOpen(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
 
       {/* Config Dialog */}
       <Dialog
-        open={!!configKey}
-        onClose={() => setConfigKey(null)}
+        open={configKeyOpen}
+        onClose={() => setConfigKeyOpen(false)}
         maxWidth="md"
         fullWidth
+        slotProps={{ transition: { onExited: () => setConfigKey(null) } }}
       >
         <DialogTitle>API 密钥配置</DialogTitle>
         <DialogContent>
-          {configKey && <ConfigTabs keyPrefix={configKey.keyPrefix} fullKey={configKey.fullKey} onCopy={(msg) => showSnackbar("success", msg)} />}
+          {configKey?.fullKey && <ConfigTabs fullKey={configKey.fullKey} onCopy={(msg) => showSnackbar("success", msg)} />}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfigKey(null)}>关闭</Button>
+          <Button onClick={() => setConfigKeyOpen(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
 

@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   Box, Drawer, AppBar, Toolbar, Typography, Button, IconButton,
   List, ListItem, ListItemButton, ListItemIcon, ListItemText,
-  CircularProgress, Alert,
+  CircularProgress, Alert, Snackbar,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -64,6 +64,7 @@ export default function AppLayout() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [logoutMsg, setLogoutMsg] = useState(false);
 
   if (loading) {
     return (
@@ -129,7 +130,8 @@ export default function AppLayout() {
               startIcon={<LogoutIcon />}
               onClick={() => {
                 logout();
-                navigate("/login");
+                setLogoutMsg(true);
+                setTimeout(() => navigate("/login"), 500);
               }}
             >
               退出登录
@@ -155,6 +157,9 @@ export default function AppLayout() {
           <Outlet />
         </Box>
       </Box>
+      <Snackbar open={logoutMsg} autoHideDuration={2000} onClose={() => setLogoutMsg(false)}>
+        <Alert severity="success" variant="filled">已退出登录</Alert>
+      </Snackbar>
     </Box>
   );
 }

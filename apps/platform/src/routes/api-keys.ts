@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import type { DbClient } from "@ncm/database";
+import type { Env } from "../config.js";
 import { getUserId } from "../middleware/auth.js";
 import {
   listApiKeys,
@@ -13,12 +14,12 @@ import {
   updateApiKeySchema,
 } from "../validators/api-keys.js";
 
-export function createApiKeyRoutes(db: DbClient) {
+export function createApiKeyRoutes(db: DbClient, env: Env) {
   const router = new Hono();
 
   router.get("/", async (c) => {
     const userId = getUserId(c);
-    const keys = await listApiKeys(db, userId);
+    const keys = await listApiKeys(db, userId, env);
     return c.json({ keys });
   });
 
@@ -26,7 +27,7 @@ export function createApiKeyRoutes(db: DbClient) {
     const userId = getUserId(c);
     const body = await c.req.json();
     const input = createApiKeySchema.parse(body);
-    const result = await createApiKey(db, userId, input.name, input.expiresInDays);
+    const result = await createApiKey(db, userId, input.name, env, input.expiresInDays);
     return c.json(result, 201);
   });
 

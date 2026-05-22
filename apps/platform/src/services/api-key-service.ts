@@ -1,34 +1,53 @@
 import { eq, desc, and } from "drizzle-orm";
 import type { DbClient } from "@ncm/database";
 import { apiKeys, apiKeyLogs } from "@ncm/database/schema";
-import { generateApiKey } from "@ncm/auth";
+import { generateApiKey, encryptCookies, decryptCookies, deriveEncryptionKey } from "@ncm/auth";
+import type { Env } from "../config.js";
 import { AppError } from "../middleware/error.js";
 
-export async function listApiKeys(db: DbClient, userId: string) {
+function getEncryptionKey(env: Env): Buffer {
+  return deriveEncryptionKey(env.COOKIE_ENCRYPTION_KEY);
+}
+
+export async function listApiKeys(db: DbClient, userId: string, env: Env) {
+  const encryptionKey = getEncryptionKey(env);
+
   const keys = await db
     .select()
     .from(apiKeys)
     .where(and(eq(apiKeys.userId, userId), eq(apiKeys.isActive, true)))
     .orderBy(desc(apiKeys.createdAt));
 
-  return keys.map((k) => ({
-    id: k.id,
-    name: k.name,
-    keyPrefix: k.keyPrefix,
-    isActive: k.isActive,
-    lastUsedAt: k.lastUsedAt,
-    expiresAt: k.expiresAt,
-    createdAt: k.createdAt,
-  }));
+  return keys.map((k) => {
+    let fullKey: string | null = null;
+    if (k.encryptedKey && k.keyIv && k.keyAuthTag) {
+      try {
+        fullKey = decryptCookies(k.encryptedKey, k.keyIv, k.keyAuthTag, encryptionKey);
+      } catch { /* silently skip if decryption fails */ }
+    }
+    return {
+      id: k.id,
+      name: k.name,
+      fullKey,
+      isActive: k.isActive,
+      lastUsedAt: k.lastUsedAt,
+      expiresAt: k.expiresAt,
+      createdAt: k.createdAt,
+    };
+  });
 }
 
 export async function createApiKey(
   db: DbClient,
   userId: string,
   name: string,
+  env: Env,
   expiresInDays?: number,
 ) {
-  const { fullKey, keyHash, keyPrefix } = generateApiKey();
+  const encryptionKey = getEncryptionKey(env);
+  const { fullKey, keyHash } = generateApiKey();
+
+  const { encrypted, iv, authTag } = encryptCookies(fullKey, encryptionKey);
 
   const record = await db
     .insert(apiKeys)
@@ -36,7 +55,9 @@ export async function createApiKey(
       userId,
       name,
       keyHash,
-      keyPrefix,
+      encryptedKey: encrypted,
+      keyIv: iv,
+      keyAuthTag: authTag,
       ...(expiresInDays
         ? { expiresAt: new Date(Date.now() + expiresInDays * 86400000) }
         : {}),
@@ -44,7 +65,7 @@ export async function createApiKey(
     .returning({ id: apiKeys.id })
     .get();
 
-  return { id: record.id, name, keyPrefix, fullKey };
+  return { id: record.id, name, fullKey };
 }
 
 export async function revokeApiKey(

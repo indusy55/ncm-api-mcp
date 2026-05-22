@@ -18,7 +18,7 @@ export function createRoutes(db: DbClient, env: Env) {
 
   router.route("/users", createUserRoutes(db));
   router.route("/netease", createNeteaseRoutes(db, env));
-  router.route("/keys", createApiKeyRoutes(db));
+  router.route("/keys", createApiKeyRoutes(db, env));
 
   return router;
 }

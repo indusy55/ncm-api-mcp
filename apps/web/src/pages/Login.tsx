@@ -10,6 +10,7 @@ export default function Login() {
   const [loginField, setLoginField] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,7 +18,8 @@ export default function Login() {
     setError(null);
     try {
       await login(loginField, password);
-      navigate("/");
+      setSuccess(true);
+      setTimeout(() => navigate("/"), 600);
     } catch (err: any) {
       setError(err.response?.data?.error || "登录失败");
     } finally {
@@ -59,6 +61,9 @@ export default function Login() {
       </Card>
       <Snackbar open={!!error} autoHideDuration={4000} onClose={() => setError(null)}>
         <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>
+      </Snackbar>
+      <Snackbar open={success} autoHideDuration={2000} onClose={() => setSuccess(false)}>
+        <Alert severity="success" variant="filled">登录成功</Alert>
       </Snackbar>
     </Box>
   );
