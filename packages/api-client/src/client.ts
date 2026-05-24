@@ -20,5 +20,31 @@ export function createNcmClient(cookies: string) {
     return fn({ ...params, cookie: cookies });
   };
 
-  return { call };
+  const callWithoutCookie = async (
+    method: string,
+    params: Record<string, unknown> = {},
+  ): Promise<NcmApiResponse> => {
+    const fn = ncm[method];
+    if (!fn) {
+      throw new Error(`Unknown NetEase API method: ${method}`);
+    }
+    return fn(params);
+  };
+
+  const loginQrKey = () => callWithoutCookie("login_qr_key");
+  const loginQrCreate = (key: string, qrimg = true) =>
+    callWithoutCookie("login_qr_create", { key, qrimg });
+  const loginQrCheck = (key: string) => callWithoutCookie("login_qr_check", { key });
+
+  return {
+    call,
+    callWithoutCookie,
+    loginQrKey,
+    loginQrCreate,
+    loginQrCheck,
+    userAccount: (cookieOverride?: string) =>
+      cookieOverride
+        ? ncm.user_account({ cookie: cookieOverride })
+        : call("user_account"),
+  };
 }

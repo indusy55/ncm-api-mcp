@@ -1,21 +1,19 @@
-import { createRequire } from "node:module";
 import { eq } from "drizzle-orm";
 import type { DbClient } from "@ncm/database";
 import { neteaseAccounts } from "@ncm/database/schema";
 import { encryptCookies, deriveEncryptionKey } from "@ncm/auth";
+import { createNcmClient } from "@ncm/api-client";
 import type { Env } from "../config.js";
-import { AppError } from "../middleware/error.js";
 
-const require = createRequire(import.meta.url);
-const ncm = require("@neteasecloudmusicapienhanced/api");
+const ncm = createNcmClient("");
 
 export async function createQrKey(): Promise<string> {
-  const res = await ncm.login_qr_key({});
+  const res = await ncm.loginQrKey();
   return res.body.data.unikey;
 }
 
 export async function createQrImage(key: string): Promise<string> {
-  const res = await ncm.login_qr_create({ key, qrimg: true });
+  const res = await ncm.loginQrCreate(key, true);
   return res.body.data.qrimg;
 }
 
@@ -27,7 +25,7 @@ export async function checkQrStatus(
 ) {
   let res;
   try {
-    res = await ncm.login_qr_check({ key });
+    res = await ncm.loginQrCheck(key);
   } catch (err) {
     console.error("login_qr_check failed:", err);
     return { status: "waiting" as const };
@@ -51,7 +49,7 @@ export async function checkQrStatus(
       const { encrypted, iv, authTag } = encryptCookies(cookieString, encryptionKey);
 
       // Get user info
-      const userInfo = await ncm.user_account({ cookie: cookieString });
+      const userInfo = await ncm.userAccount(cookieString);
       const profile = userInfo.body?.profile || userInfo.body?.account || {};
       const neteaseUid = profile.userId || profile.id;
       if (!neteaseUid) {
