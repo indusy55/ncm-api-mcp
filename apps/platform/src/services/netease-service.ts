@@ -67,7 +67,7 @@ export async function checkQrStatus(
         return { status: "expired" as const };
       }
 
-      const cookieString = extractCookies(cookieArray);
+      const { cookieString, expireAt } = extractCookies(cookieArray);
       const encryptionKey = deriveEncryptionKey(env.COOKIE_ENCRYPTION_KEY);
       const { encrypted, iv, authTag } = encryptCookies(cookieString, encryptionKey);
 
@@ -93,6 +93,7 @@ export async function checkQrStatus(
           cookiesEncrypted: encrypted,
           cookiesIv: iv,
           cookiesAuthTag: authTag,
+          ...(expireAt ? { cookiesExpireAt: expireAt } : {}),
           status: "active",
         })
         .onConflictDoUpdate({
@@ -104,6 +105,7 @@ export async function checkQrStatus(
             cookiesEncrypted: encrypted,
             cookiesIv: iv,
             cookiesAuthTag: authTag,
+            ...(expireAt ? { cookiesExpireAt: expireAt } : {}),
             status: "active",
           },
         })
@@ -142,13 +144,16 @@ export async function getBindingStatus(db: DbClient, userId: string) {
     return { bound: false as const };
   }
 
+  const expired = account.status === "expired"
+    || (account.cookiesExpireAt != null && account.cookiesExpireAt < new Date());
+
   return {
     bound: true as const,
     account: {
       neteaseUid: account.neteaseUid,
       nickname: account.nickname,
       avatarUrl: account.avatarUrl,
-      status: account.status,
+      status: expired ? "expired" : account.status,
     },
   };
 }
@@ -160,8 +165,41 @@ export async function unbindAccount(db: DbClient, userId: string) {
     .run();
 }
 
-function extractCookies(cookieArray: string[]): string {
-  return cookieArray
-    .map((c: string) => c.split(";")[0])
+function extractCookies(cookieArray: string[]): { cookieString: string; expireAt: Date | null } {
+  let earliestExpire: number | null = null;
+
+  const cookieString = cookieArray
+    .map((c: string) => {
+      const parts = c.split(";");
+      const kv = parts[0].trim(); // name=value
+
+      for (let i = 1; i < parts.length; i++) {
+        const attr = parts[i].trim();
+
+        if (attr.startsWith("Max-Age=")) {
+          const maxAge = parseInt(attr.slice(8), 10);
+          if (!isNaN(maxAge)) {
+            const expireTime = Date.now() + maxAge * 1000;
+            if (earliestExpire === null || expireTime < earliestExpire) {
+              earliestExpire = expireTime;
+            }
+          }
+        } else if (attr.startsWith("Expires=")) {
+          const expireDate = new Date(attr.slice(8)).getTime();
+          if (!isNaN(expireDate)) {
+            if (earliestExpire === null || expireDate < earliestExpire) {
+              earliestExpire = expireDate;
+            }
+          }
+        }
+      }
+
+      return kv;
+    })
     .join("; ");
+
+  return {
+    cookieString,
+    expireAt: earliestExpire ? new Date(earliestExpire) : null,
+  };
 }

@@ -43,7 +43,7 @@ const songLibraryMode = z.enum([
   "related_playlist",
 ]);
 
-export const registerSongTools: ToolRegistrar = (server, { ncm, call }) => {
+export const registerSongTools: ToolRegistrar = (server, { ncm, call, neteaseUid }) => {
   server.registerTool(
     "netease_song_read",
     {
@@ -164,13 +164,12 @@ export const registerSongTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: writeAnnotations,
       inputSchema: {
         id: z.union([z.number(), z.string()]),
-        uid: z.union([z.number(), z.string()]).optional(),
         like: z.boolean().default(true),
       },
     },
-    async ({ id, uid, like }) =>
+    async ({ id, like }) =>
       call("netease_song_like", () =>
-        ncm.call("song_like", { id, uid, like: like ? "true" : "false" }),
+        ncm.call("song_like", { id, uid: neteaseUid ?? undefined, like: like ? "true" : "false" }),
       ),
   );
 

@@ -31,7 +31,7 @@ const artistContentMode = z.enum([
   "new_mv",
 ]);
 
-export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
+export const registerArtistTools: ToolRegistrar = (server, { ncm, call, neteaseUid }) => {
   server.registerTool(
     "netease_artist_catalog",
     {
@@ -55,6 +55,12 @@ export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
             mapArtistListSummary,
           );
         case "sublist":
+          if (!neteaseUid) {
+            return Promise.resolve({
+              content: [{ type: "text" as const, text: JSON.stringify({ error: "未绑定网易云账号，无法获取收藏的歌手" }) }],
+              isError: true,
+            });
+          }
           return call(
             "netease_artist_catalog",
             () => ncm.call("artist_sublist", { limit, offset }),

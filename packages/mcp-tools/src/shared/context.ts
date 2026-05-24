@@ -19,6 +19,7 @@ export const writeAnnotations = {
 
 export interface ToolDeps {
   ncm: NcmClient;
+  neteaseUid: number | null;
   call: <T extends NcmApiResponse>(
     name: string,
     fn: () => Promise<T>,

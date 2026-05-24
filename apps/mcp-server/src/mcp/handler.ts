@@ -40,6 +40,7 @@ export function createMcpHandler(db: DbClient) {
     registerAllTools(
       server,
       mcpContext.neteaseAccount?.cookies ?? "",
+      mcpContext.neteaseAccount?.neteaseUid ?? null,
       (toolName) => {
         const ip = c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "unknown";
         try {

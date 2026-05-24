@@ -27,7 +27,7 @@ const albumReadMode = z.enum([
   "sublist",
 ]);
 
-export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
+export const registerAlbumTools: ToolRegistrar = (server, { ncm, call, neteaseUid }) => {
   server.registerTool(
     "netease_album_read",
     {
@@ -93,6 +93,12 @@ export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
             () => ncm.call("album_songsaleboard", { albumType, type: saleType, year }),
           );
         case "sublist":
+          if (!neteaseUid) {
+            return Promise.resolve({
+              content: [{ type: "text" as const, text: JSON.stringify({ error: "未绑定网易云账号，无法获取收藏的专辑" }) }],
+              isError: true,
+            });
+          }
           return call(
             "netease_album_read",
             () => ncm.call("album_sublist", { limit, offset }),

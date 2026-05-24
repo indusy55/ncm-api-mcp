@@ -70,27 +70,32 @@ export function apiKeyAuth(env: Env, db: DbClient) {
     }
 
     const account = keyRecord.user.neteaseAccount;
-    let cookies = "";
+    let neteaseAccount: McpContext["neteaseAccount"] = null;
+
     if (account) {
-      const encryptionKey = deriveEncryptionKey(env.COOKIE_ENCRYPTION_KEY);
-      cookies = decryptCookies(
-        account.cookiesEncrypted,
-        account.cookiesIv,
-        account.cookiesAuthTag,
-        encryptionKey,
-      );
+      const expired = account.status === "expired"
+        || (account.cookiesExpireAt != null && account.cookiesExpireAt < new Date());
+
+      if (!expired) {
+        const encryptionKey = deriveEncryptionKey(env.COOKIE_ENCRYPTION_KEY);
+        const cookies = decryptCookies(
+          account.cookiesEncrypted,
+          account.cookiesIv,
+          account.cookiesAuthTag,
+          encryptionKey,
+        );
+        neteaseAccount = {
+          id: account.id,
+          neteaseUid: account.neteaseUid,
+          nickname: account.nickname,
+          cookies,
+        };
+      }
     }
 
     c.set("mcpContext", {
       user: { id: keyRecord.user.id, email: keyRecord.user.email },
-      neteaseAccount: account
-        ? {
-            id: account.id,
-            neteaseUid: account.neteaseUid,
-            nickname: account.nickname,
-            cookies,
-          }
-        : null,
+      neteaseAccount,
       apiKey: { id: keyRecord.id, name: keyRecord.name },
       allowedToolNames: await getAllowedToolNamesForUser(db, keyRecord.user.id),
     });
