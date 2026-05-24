@@ -1,10 +1,12 @@
-FROM node:20-alpine AS base
+FROM node:20-slim AS base
 RUN corepack enable && corepack prepare pnpm@10.31.0 --activate
 WORKDIR /app
 
-# ── Build environment (python3 + build-base for native modules like better-sqlite3) ──
+# ── Build environment (python3 + build-essential for native modules like better-sqlite3) ──
 FROM base AS build-env
-RUN apk add --no-cache python3 build-base
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 # ── Dependencies ──
 FROM build-env AS deps
@@ -49,7 +51,9 @@ RUN pnpm deploy --legacy --filter @ncm/platform /tmp/deploy-platform && \
 
 # ── Platform runtime ──
 FROM base AS platform
-RUN apk add --no-cache tini
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends tini \
+    && rm -rf /var/lib/apt/lists/*
 ENTRYPOINT ["tini", "--"]
 WORKDIR /app
 COPY --from=builder /tmp/deploy-platform .
@@ -59,7 +63,9 @@ CMD ["node", "dist/index.js"]
 
 # ── MCP Server runtime ──
 FROM base AS mcp-server
-RUN apk add --no-cache tini
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends tini \
+    && rm -rf /var/lib/apt/lists/*
 ENTRYPOINT ["tini", "--"]
 WORKDIR /app
 COPY --from=builder /tmp/deploy-mcp-server .

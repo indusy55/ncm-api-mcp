@@ -150,6 +150,16 @@ export default function AdminTools() {
                       <Typography color="text.secondary" sx={{ fontSize: 14, mb: 0.5 }}>
                         {item.description}
                       </Typography>
+                      <Typography
+                        component="code"
+                        sx={{
+                          fontSize: 12,
+                          color: "text.secondary",
+                          fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace",
+                        }}
+                      >
+                        {item.name}
+                      </Typography>
                     </Box>
                     <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                       <FormControlLabel
