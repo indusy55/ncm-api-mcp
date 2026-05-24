@@ -155,7 +155,8 @@ export async function setAdminToolPolicy(
     .onConflictDoUpdate({
       target: settings.key,
       set: { value: JSON.stringify(adminPolicy) },
-    });
+    })
+    .run();
 }
 
 export async function getUserToolGroups(db: DbClient, userId: string): Promise<ToolPolicyGroup[]> {
@@ -233,7 +234,8 @@ export async function setUserToolPreference(
     .onConflictDoUpdate({
       target: [toolPreferences.userId, toolPreferences.toolName],
       set: { enabled },
-    });
+    })
+    .run();
 }
 
 export async function seedMissingUserToolPreferences(db: DbClient, userId: string) {
@@ -254,5 +256,5 @@ export async function seedMissingUserToolPreferences(db: DbClient, userId: strin
 
   if (missing.length === 0) return;
 
-  await db.insert(toolPreferences).values(missing).onConflictDoNothing();
+  await db.insert(toolPreferences).values(missing).onConflictDoNothing().run();
 }

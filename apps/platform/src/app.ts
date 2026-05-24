@@ -43,7 +43,7 @@ async function seedInitialAdmin(db: ReturnType<typeof createDbClient>, env: Env)
     username: env.INITIAL_ADMIN_USERNAME!,
     passwordHash,
     role: "admin",
-  });
+  }).run();
 
   console.log(`Initial admin user created: ${env.INITIAL_ADMIN_USERNAME} (${env.INITIAL_ADMIN_EMAIL})`);
 }

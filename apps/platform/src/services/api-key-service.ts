@@ -76,7 +76,8 @@ export async function revokeApiKey(
   await db
     .update(apiKeys)
     .set({ isActive: false })
-    .where(and(eq(apiKeys.id, keyId), eq(apiKeys.userId, userId)));
+    .where(and(eq(apiKeys.id, keyId), eq(apiKeys.userId, userId)))
+    .run();
 }
 
 export async function updateApiKey(
@@ -91,7 +92,8 @@ export async function updateApiKey(
       ...(input.name !== undefined && { name: input.name }),
       ...(input.isActive !== undefined && { isActive: input.isActive }),
     })
-    .where(and(eq(apiKeys.id, keyId), eq(apiKeys.userId, userId)));
+    .where(and(eq(apiKeys.id, keyId), eq(apiKeys.userId, userId)))
+    .run();
 }
 
 export async function listApiKeyLogs(

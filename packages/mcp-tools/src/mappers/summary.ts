@@ -389,21 +389,23 @@ export function mapUserSubcountSummary(body: Record<string, unknown>) {
 }
 
 export function mapUserRecordSummary(body: Record<string, unknown>) {
-  const weekData = asArray(body.weekData).map((song) => ({
-    ...compactSong(song),
-    score: song.score,
-    playCount: song.playCount,
-  }));
-  const allData = asArray(body.allData).map((song) => ({
-    ...compactSong(song),
-    score: song.score,
-    playCount: song.playCount,
-  }));
+  const weekData = asArray(body.weekData).map(compactUserRecordItem);
+  const allData = asArray(body.allData).map(compactUserRecordItem);
 
   return {
     code: body.code,
     weekData,
     allData,
+  };
+}
+
+function compactUserRecordItem(item: Record<string, unknown>) {
+  const song = asRecord(item.song) ?? item;
+
+  return {
+    ...compactSong(song),
+    score: item.score,
+    playCount: item.playCount,
   };
 }
 

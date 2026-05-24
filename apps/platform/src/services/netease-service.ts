@@ -106,7 +106,8 @@ export async function checkQrStatus(
             cookiesAuthTag: authTag,
             status: "active",
           },
-        });
+        })
+        .run();
 
       return { status: "confirmed" as const, nickname, uid: neteaseUid, avatarUrl };
     } catch (err) {
@@ -155,7 +156,8 @@ export async function getBindingStatus(db: DbClient, userId: string) {
 export async function unbindAccount(db: DbClient, userId: string) {
   await db
     .delete(neteaseAccounts)
-    .where(eq(neteaseAccounts.userId, userId));
+    .where(eq(neteaseAccounts.userId, userId))
+    .run();
 }
 
 function extractCookies(cookieArray: string[]): string {

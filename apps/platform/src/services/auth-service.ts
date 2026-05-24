@@ -114,7 +114,7 @@ export async function registerUser(
     userId: user.id,
     tokenHash: hashRefreshToken(refreshToken),
     expiresAt,
-  });
+  }).run();
 
   return {
     user: {
@@ -171,7 +171,7 @@ export async function loginUser(
     userId: user.id,
     tokenHash: hashRefreshToken(refreshToken),
     expiresAt,
-  });
+  }).run();
 
   return {
     user: {
@@ -270,13 +270,15 @@ export async function logoutUser(
 ): Promise<void> {
   await db
     .delete(refreshTokens)
-    .where(eq(refreshTokens.tokenHash, hashRefreshToken(refreshToken)));
+    .where(eq(refreshTokens.tokenHash, hashRefreshToken(refreshToken)))
+    .run();
 }
 
 export async function cleanupExpiredRefreshTokens(db: DbClient): Promise<void> {
   await db
     .delete(refreshTokens)
-    .where(lt(refreshTokens.expiresAt, new Date()));
+    .where(lt(refreshTokens.expiresAt, new Date()))
+    .run();
 }
 
 function hashRefreshToken(token: string): string {

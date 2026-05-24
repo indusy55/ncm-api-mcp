@@ -20,7 +20,7 @@ export function createMcpHandler(db: DbClient) {
       "Use netease_search for keyword discovery before detail tools when IDs are not known.",
       "Use detail tools only when the required NetEase ID is known.",
       "Prefer read-only tools unless the user explicitly requests a change.",
-      "Use netease_like only when the user explicitly asks to like or unlike a song.",
+      "Use netease_song_like only when the user explicitly asks to like or unlike a song.",
     ].join(" ");
 
     const server = new McpServer(

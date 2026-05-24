@@ -21,7 +21,8 @@ export async function setSetting(db: DbClient, key: string, value: string) {
     .onConflictDoUpdate({
       target: settings.key,
       set: { value },
-    });
+    })
+    .run();
 }
 
 export async function setSettingIfMissing(
@@ -32,7 +33,8 @@ export async function setSettingIfMissing(
   await db
     .insert(settings)
     .values({ key, value })
-    .onConflictDoNothing({ target: settings.key });
+    .onConflictDoNothing({ target: settings.key })
+    .run();
 }
 
 export async function getAllSettings(db: DbClient) {

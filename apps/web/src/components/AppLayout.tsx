@@ -16,7 +16,7 @@ import BuildIcon from "@mui/icons-material/Build";
 import TuneIcon from "@mui/icons-material/Tune";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, useNavigate, useLocation, Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.js";
 import { useNeteaseAccount } from "../hooks/useNeteaseAccount.js";
 import { useMediaQuery, useTheme } from "@mui/material";
@@ -100,11 +100,13 @@ export default function AppLayout({ mode }: { mode: "user" | "admin" }) {
   }
 
   const isAdmin = user.role === "admin";
-  const isAdminRoute = location.pathname.startsWith("/admin/");
 
   if (mode === "admin" && !isAdmin) {
-    navigate("/");
-    return null;
+    return <Navigate to="/" replace />;
+  }
+
+  if (mode === "user" && location.pathname.startsWith("/admin/")) {
+    return <Navigate to="/" replace />;
   }
 
   const toggleAdminView = () => {
