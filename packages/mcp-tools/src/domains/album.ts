@@ -13,185 +13,96 @@ import {
   mapWriteActionSummary,
 } from "../mappers/summary.js";
 
+const albumReadMode = z.enum([
+  "top_song",
+  "top_album",
+  "detail",
+  "dynamic",
+  "new",
+  "list",
+  "newest",
+  "list_style",
+  "privilege",
+  "songsaleboard",
+  "sublist",
+]);
+
 export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
-    "netease_top_song",
+    "netease_album_read",
     {
-      description: "top song",
+      description: "album read",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        type: z
-          .enum(["0", "7", "96", "16", "8"])
-          .default("0")
-          ,
-      },
-    },
-    async ({ type }) => call("netease_top_song", () => ncm.call("top_song", { type }), mapSongListSummary),
-  );
-
-  server.registerTool(
-    "netease_top_album",
-    {
-      description: "top album",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
+        mode: albumReadMode.default("detail"),
+        id: z.union([z.number(), z.string()]).optional(),
         area: z.enum(["ALL", "ZH", "EA", "KR", "JP"]).default("ALL"),
-        type: z.enum(["hot", "new"]).default("new"),
-        year: z.string().optional(),
-        mouth: z.string().optional(),
-        limit: z.number().int().min(1).max(100).default(10),
-        offset: z.number().int().min(0).default(0),
-      },
-    },
-    async ({ area, type, year, mouth, limit, offset }) =>
-      call(
-        "netease_top_album",
-        () => ncm.call("top_album", { area, type, year, mouth, limit, offset }),
-        mapAlbumListSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_album_detail",
-    {
-      description: "album detail",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        id: z.union([z.number(), z.string()]),
-      },
-    },
-    async ({ id }) =>
-      call("netease_album_detail", () => ncm.call("album", { id }), mapAlbumDetailSummary),
-  );
-
-  server.registerTool(
-    "netease_album_detail_dynamic",
-    {
-      description: "album detail dynamic",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        id: z.union([z.number(), z.string()]),
-      },
-    },
-    async ({ id }) =>
-      call(
-        "netease_album_detail_dynamic",
-        () => ncm.call("album_detail_dynamic", { id }),
-        mapAlbumDetailDynamicSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_album_new",
-    {
-      description: "album new",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        area: z.enum(["ALL", "ZH", "EA", "KR", "JP"]).default("ALL"),
-        limit: z.number().int().min(1).max(100).default(10),
-        offset: z.number().int().min(0).default(0),
-      },
-    },
-    async ({ area, limit, offset }) =>
-      call("netease_album_new", () => ncm.call("album_new", { area, limit, offset }), mapAlbumListSummary),
-  );
-
-  server.registerTool(
-    "netease_album_list",
-    {
-      description: "album list",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        area: z.enum(["ALL", "ZH", "EA", "KR", "JP"]).default("ALL"),
+        styleArea: z.enum(["Z_H", "E_A", "KR", "JP"]).default("Z_H"),
         type: z.string().default("hot"),
+        topType: z.enum(["hot", "new"]).default("new"),
+        topSongType: z.enum(["0", "7", "96", "16", "8"]).default("0"),
+        year: z.union([z.number().int(), z.string()]).optional(),
+        mouth: z.string().optional(),
+        albumType: z.enum(["0", "1"]).default("0"),
+        saleType: z.enum(["daily", "week", "year", "total"]).default("daily"),
         limit: z.number().int().min(1).max(100).default(10),
         offset: z.number().int().min(0).default(0),
       },
     },
-    async ({ area, type, limit, offset }) =>
-      call(
-        "netease_album_list",
-        () => ncm.call("album_list", { area, type, limit, offset }),
-        mapAlbumListSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_album_newest",
-    {
-      description: "album newest",
-      annotations: readOnlyAnnotations,
-      inputSchema: {},
+    async ({ mode, id, area, styleArea, type, topType, topSongType, year, mouth, albumType, saleType, limit, offset }) => {
+      switch (mode) {
+        case "top_song":
+          return call("netease_album_read", () => ncm.call("top_song", { type: topSongType }), mapSongListSummary);
+        case "top_album":
+          return call(
+            "netease_album_read",
+            () => ncm.call("top_album", { area, type: topType, year, mouth, limit, offset }),
+            mapAlbumListSummary,
+          );
+        case "dynamic":
+          return call(
+            "netease_album_read",
+            () => ncm.call("album_detail_dynamic", { id }),
+            mapAlbumDetailDynamicSummary,
+          );
+        case "new":
+          return call(
+            "netease_album_read",
+            () => ncm.call("album_new", { area, limit, offset }),
+            mapAlbumListSummary,
+          );
+        case "list":
+          return call(
+            "netease_album_read",
+            () => ncm.call("album_list", { area, type, limit, offset }),
+            mapAlbumListSummary,
+          );
+        case "newest":
+          return call("netease_album_read", () => ncm.call("album_newest"), mapAlbumListSummary);
+        case "list_style":
+          return call(
+            "netease_album_read",
+            () => ncm.call("album_list_style", { area: styleArea, limit, offset }),
+            mapAlbumListSummary,
+          );
+        case "privilege":
+          return call("netease_album_read", () => ncm.call("album_privilege", { id }));
+        case "songsaleboard":
+          return call(
+            "netease_album_read",
+            () => ncm.call("album_songsaleboard", { albumType, type: saleType, year }),
+          );
+        case "sublist":
+          return call(
+            "netease_album_read",
+            () => ncm.call("album_sublist", { limit, offset }),
+            mapAlbumSublistSummary,
+          );
+        case "detail":
+        default:
+          return call("netease_album_read", () => ncm.call("album", { id }), mapAlbumDetailSummary);
+      }
     },
-    async () => call("netease_album_newest", () => ncm.call("album_newest"), mapAlbumListSummary),
-  );
-
-  server.registerTool(
-    "netease_album_list_style",
-    {
-      description: "album list style",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        area: z.enum(["Z_H", "E_A", "KR", "JP"]).default("Z_H"),
-        limit: z.number().int().min(1).max(100).default(10),
-        offset: z.number().int().min(0).default(0),
-      },
-    },
-    async ({ area, limit, offset }) =>
-      call(
-        "netease_album_list_style",
-        () => ncm.call("album_list_style", { area, limit, offset }),
-        mapAlbumListSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_album_privilege",
-    {
-      description: "album privilege",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        id: z.union([z.number(), z.string()]),
-      },
-    },
-    async ({ id }) => call("netease_album_privilege", () => ncm.call("album_privilege", { id })),
-  );
-
-  server.registerTool(
-    "netease_album_songsaleboard",
-    {
-      description: "album songsaleboard",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        albumType: z
-          .enum(["0", "1"])
-          .default("0")
-          ,
-        type: z.enum(["daily", "week", "year", "total"]).default("daily"),
-        year: z
-          .union([z.number().int(), z.string()])
-          .optional()
-          ,
-      },
-    },
-    async ({ albumType, type, year }) =>
-      call("netease_album_songsaleboard", () =>
-        ncm.call("album_songsaleboard", { albumType, type, year }),
-      ),
-  );
-
-  server.registerTool(
-    "netease_album_sublist",
-    {
-      description: "album sublist [login]",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        limit: z.number().int().min(1).max(100).default(10),
-        offset: z.number().int().min(0).default(0),
-      },
-    },
-    async ({ limit, offset }) =>
-      call("netease_album_sublist", () => ncm.call("album_sublist", { limit, offset }), mapAlbumSublistSummary),
   );
 
   server.registerTool(

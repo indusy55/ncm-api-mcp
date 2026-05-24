@@ -12,152 +12,75 @@ import {
   mapUserSubcountSummary,
 } from "../mappers/summary.js";
 
+const userMode = z.enum([
+  "info",
+  "detail",
+  "playlists",
+  "event",
+  "follows",
+  "followeds",
+  "level",
+  "subcount",
+  "record",
+]);
+
 export const registerUserTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
-    "netease_user_info",
+    "netease_user",
     {
-      description: "user info [login]",
-      annotations: readOnlyAnnotations,
-      inputSchema: {},
-    },
-    async () => call("netease_user_info", () => ncm.call("user_account"), mapUserInfoSummary),
-  );
-
-  server.registerTool(
-    "netease_user_playlists",
-    {
-      description: "user playlists",
+      description: "user",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        uid: z.union([z.number(), z.string()]),
+        mode: userMode.default("detail"),
+        uid: z.union([z.number(), z.string()]).optional(),
+        type: z.enum(["0", "1"]).default("0"),
         limit: z.number().int().min(1).max(100).default(10),
         offset: z.number().int().min(0).default(0),
+        lasttime: z.union([z.number().int(), z.string()]).optional(),
       },
     },
-    async ({ uid, limit, offset }) =>
-      call(
-        "netease_user_playlists",
-        () => ncm.call("user_playlist", { uid, limit, offset }),
-        mapUserPlaylistsSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_user_detail",
-    {
-      description: "user detail",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        uid: z.union([z.number(), z.string()]),
-      },
+    async ({ mode, uid, type, limit, offset, lasttime }) => {
+      switch (mode) {
+        case "info":
+          return call("netease_user", () => ncm.call("user_account"), mapUserInfoSummary);
+        case "playlists":
+          return call(
+            "netease_user",
+            () => ncm.call("user_playlist", { uid, limit, offset }),
+            mapUserPlaylistsSummary,
+          );
+        case "event":
+          return call(
+            "netease_user",
+            () => ncm.call("user_event", { uid, limit, lasttime }),
+            mapUserEventSummary,
+          );
+        case "follows":
+          return call(
+            "netease_user",
+            () => ncm.call("user_follows", { uid, limit, offset }),
+            mapUserFollowListSummary,
+          );
+        case "followeds":
+          return call(
+            "netease_user",
+            () => ncm.call("user_followeds", { uid, limit, lasttime }),
+            mapUserFollowListSummary,
+          );
+        case "level":
+          return call("netease_user", () => ncm.call("user_level"), mapUserLevelSummary);
+        case "subcount":
+          return call("netease_user", () => ncm.call("user_subcount"), mapUserSubcountSummary);
+        case "record":
+          return call(
+            "netease_user",
+            () => ncm.call("user_record", { uid, type, limit }),
+            mapUserRecordSummary,
+          );
+        case "detail":
+        default:
+          return call("netease_user", () => ncm.call("user_detail", { uid }), mapUserDetailSummary);
+      }
     },
-    async ({ uid }) =>
-      call("netease_user_detail", () => ncm.call("user_detail", { uid }), mapUserDetailSummary),
-  );
-
-  server.registerTool(
-    "netease_user_event",
-    {
-      description: "user event",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        uid: z.union([z.number(), z.string()]),
-        limit: z.number().int().min(1).max(100).default(10),
-        lasttime: z
-          .union([z.number().int(), z.string()])
-          .optional()
-          ,
-      },
-    },
-    async ({ uid, limit, lasttime }) =>
-      call(
-        "netease_user_event",
-        () => ncm.call("user_event", { uid, limit, lasttime }),
-        mapUserEventSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_user_follows",
-    {
-      description: "user follows",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        uid: z.union([z.number(), z.string()]),
-        limit: z.number().int().min(1).max(100).default(10),
-        offset: z.number().int().min(0).default(0),
-      },
-    },
-    async ({ uid, limit, offset }) =>
-      call(
-        "netease_user_follows",
-        () => ncm.call("user_follows", { uid, limit, offset }),
-        mapUserFollowListSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_user_followeds",
-    {
-      description: "user followeds",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        uid: z.union([z.number(), z.string()]),
-        limit: z.number().int().min(1).max(100).default(10),
-        lasttime: z
-          .union([z.number().int(), z.string()])
-          .optional()
-          ,
-      },
-    },
-    async ({ uid, limit, lasttime }) =>
-      call(
-        "netease_user_followeds",
-        () => ncm.call("user_followeds", { uid, limit, lasttime }),
-        mapUserFollowListSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_user_level",
-    {
-      description: "user level [login]",
-      annotations: readOnlyAnnotations,
-      inputSchema: {},
-    },
-    async () => call("netease_user_level", () => ncm.call("user_level"), mapUserLevelSummary),
-  );
-
-  server.registerTool(
-    "netease_user_subcount",
-    {
-      description: "user subcount [login]",
-      annotations: readOnlyAnnotations,
-      inputSchema: {},
-    },
-    async () =>
-      call("netease_user_subcount", () => ncm.call("user_subcount"), mapUserSubcountSummary),
-  );
-
-  server.registerTool(
-    "netease_user_record",
-    {
-      description: "user record",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        uid: z.union([z.number(), z.string()]),
-        type: z
-          .enum(["0", "1"])
-          .default("0")
-          ,
-        limit: z.number().int().min(1).max(100).default(10),
-      },
-    },
-    async ({ uid, type, limit }) =>
-      call(
-        "netease_user_record",
-        () => ncm.call("user_record", { uid, type, limit }),
-        mapUserRecordSummary,
-      ),
   );
 };

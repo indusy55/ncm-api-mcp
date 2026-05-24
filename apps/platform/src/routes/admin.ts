@@ -4,8 +4,10 @@ import type { Env } from "../config.js";
 import { requireAdmin } from "../middleware/auth.js";
 import { listAllUsers, getUserById, updateUserEmail, deleteUser } from "../services/user-service.js";
 import { getAllSettings, setSetting } from "../services/settings-service.js";
+import { getAdminToolGroups, setAdminToolPolicy } from "../services/tool-policy-service.js";
 import { updateUserEmailSchema } from "../validators/users.js";
 import { updateSettingSchema } from "../validators/settings.js";
+import { adminToolPolicyUpdateSchema } from "../validators/tool-policy.js";
 
 export function createAdminRoutes(db: DbClient, env: Env) {
   const router = new Hono();
@@ -46,6 +48,18 @@ export function createAdminRoutes(db: DbClient, env: Env) {
     const body = await c.req.json();
     const { key, value } = updateSettingSchema.parse(body);
     await setSetting(db, key, value);
+    return c.json({ success: true });
+  });
+
+  router.get("/tools", async (c) => {
+    const groups = await getAdminToolGroups(db);
+    return c.json({ groups });
+  });
+
+  router.put("/tools", async (c) => {
+    const body = await c.req.json();
+    const input = adminToolPolicyUpdateSchema.parse(body);
+    await setAdminToolPolicy(db, input.toolName, input.subject, input.enabled);
     return c.json({ success: true });
   });
 

@@ -5,6 +5,7 @@ import { apiKeys } from "./api-keys.js";
 import { apiKeyLogs } from "./api-key-logs.js";
 import { refreshTokens } from "./refresh-tokens.js";
 import { settings } from "./settings.js";
+import { toolPreferences } from "./tool-preferences.js";
 
 export const usersRelations = relations(users, ({ one, many }) => ({
   neteaseAccount: one(neteaseAccounts, {
@@ -44,5 +45,12 @@ export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
   }),
 }));
 
-export { users, neteaseAccounts, apiKeys, apiKeyLogs, refreshTokens, settings };
+export const toolPreferencesRelations = relations(toolPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [toolPreferences.userId],
+    references: [users.id],
+  }),
+}));
+
+export { users, neteaseAccounts, apiKeys, apiKeyLogs, refreshTokens, settings, toolPreferences };
 export type { NeteaseAccountStatus } from "./netease-accounts.js";

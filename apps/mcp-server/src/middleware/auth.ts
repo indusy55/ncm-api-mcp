@@ -5,6 +5,7 @@ import type { DbClient } from "@ncm/database";
 import { apiKeys } from "@ncm/database/schema";
 import { decryptCookies, deriveEncryptionKey } from "@ncm/auth";
 import type { Env } from "../config.js";
+import { getAllowedToolNamesForUser } from "@ncm/mcp-tools/policy";
 
 const LAST_USED_UPDATE_INTERVAL_MS = 60_000;
 
@@ -17,6 +18,7 @@ export interface McpContext {
     cookies: string;
   } | null;
   apiKey: { id: string; name: string };
+  allowedToolNames: Set<string>;
 }
 
 declare module "hono" {
@@ -90,6 +92,7 @@ export function apiKeyAuth(env: Env, db: DbClient) {
           }
         : null,
       apiKey: { id: keyRecord.id, name: keyRecord.name },
+      allowedToolNames: await getAllowedToolNamesForUser(db, keyRecord.user.id),
     });
 
     await next();

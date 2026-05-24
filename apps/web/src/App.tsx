@@ -13,6 +13,8 @@ const ApiKeys = lazy(() => import("./pages/ApiKeys.js"));
 const McpSetup = lazy(() => import("./pages/McpSetup.js"));
 const Profile = lazy(() => import("./pages/Profile.js"));
 const AdminUsers = lazy(() => import("./pages/AdminUsers.js"));
+const ToolManagement = lazy(() => import("./pages/ToolManagement.js"));
+const AdminTools = lazy(() => import("./pages/AdminTools.js"));
 
 export default function App() {
   return (
@@ -28,7 +30,9 @@ export default function App() {
             <Route path="/account/keys" element={<ApiKeys />} />
             <Route path="/mcp-setup" element={<McpSetup />} />
             <Route path="/account/profile" element={<Profile />} />
+            <Route path="/tools" element={<ToolManagement />} />
             <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/tools" element={<AdminTools />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

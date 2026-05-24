@@ -7,6 +7,7 @@ import { createUserRoutes } from "./users.js";
 import { createNeteaseRoutes } from "./netease.js";
 import { createApiKeyRoutes } from "./api-keys.js";
 import { createAdminRoutes } from "./admin.js";
+import { createToolRoutes } from "./tools.js";
 
 export function createRoutes(db: DbClient, env: Env) {
   const router = new Hono();
@@ -20,6 +21,7 @@ export function createRoutes(db: DbClient, env: Env) {
   router.route("/users", createUserRoutes(db));
   router.route("/netease", createNeteaseRoutes(db, env));
   router.route("/keys", createApiKeyRoutes(db, env));
+  router.route("/tools", createToolRoutes(db));
   router.route("/admin", createAdminRoutes(db, env));
 
   return router;

@@ -52,6 +52,7 @@ export function createMcpHandler(db: DbClient) {
           console.error("Failed to write API key log:", err);
         }
       },
+      { allowedToolNames: mcpContext.allowedToolNames },
     );
 
     await server.connect(transport);

@@ -12,6 +12,8 @@ import MenuBookIcon from "@mui/icons-material/MenuBook";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import SupervisedUserCircleIcon from "@mui/icons-material/SupervisedUserCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
+import BuildIcon from "@mui/icons-material/Build";
+import TuneIcon from "@mui/icons-material/Tune";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.js";
 import { useNeteaseAccount } from "../hooks/useNeteaseAccount.js";
@@ -30,10 +32,12 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     { key: "/account/bind", label: "网易云账号", icon: <PersonIcon /> },
     { key: "/account/keys", label: "API 密钥", icon: <KeyIcon /> },
     { key: "/mcp-setup", label: "MCP 配置", icon: <MenuBookIcon /> },
+    { key: "/tools", label: "工具管理", icon: <BuildIcon /> },
   ];
 
   const adminItems = [
     { key: "/admin/users", label: "用户管理", icon: <SupervisedUserCircleIcon /> },
+    { key: "/admin/tools", label: "工具策略", icon: <TuneIcon /> },
   ];
 
   return (
