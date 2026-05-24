@@ -9,8 +9,7 @@ export function createTextResult(body: unknown) {
 }
 
 export function handleNcmError(error: unknown) {
-  const message =
-    error instanceof Error ? error.message : "Unknown NetEase API error";
+  const message = error instanceof Error ? error.message : "NetEase API error";
   return {
     content: [{ type: "text" as const, text: JSON.stringify({ error: message }) }],
     isError: true,
@@ -25,7 +24,7 @@ export async function safeNcmCall(
     const res = await apiCall();
     if (res.body?.code === 301) {
       return {
-        content: [{ type: "text" as const, text: JSON.stringify({ error: "Cookie expired, please re-bind your NetEase account" }) }],
+        content: [{ type: "text" as const, text: JSON.stringify({ error: "Cookie expired. Re-bind account." }) }],
         isError: true,
       };
     }

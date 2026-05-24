@@ -15,7 +15,7 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_top_mv",
     {
-      description: "Use when the user wants top MVs by region.",
+      description: "top mv",
       annotations: readOnlyAnnotations,
       inputSchema: {
         area: z.enum(["全部", "内地", "港台", "欧美", "日本", "韩国"]).default("全部"),
@@ -30,7 +30,7 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_mv_all",
     {
-      description: "Use when the user wants to browse MVs by area, type, and order.",
+      description: "mv all",
       annotations: readOnlyAnnotations,
       inputSchema: {
         area: z.enum(["全部", "内地", "港台", "欧美", "韩国", "日本"]).default("全部"),
@@ -47,10 +47,10 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_mv_detail",
     {
-      description: "Use when an MV ID is known and the user wants MV metadata or detail information.",
+      description: "mv detail",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        mvid: z.union([z.number(), z.string()]).describe("MV ID"),
+        mvid: z.union([z.number(), z.string()]),
       },
     },
     async ({ mvid }) =>
@@ -60,10 +60,10 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_mv_detail_info",
     {
-      description: "Use when an MV ID is known and the user wants supplementary MV detail information such as interaction stats.",
+      description: "mv detail info",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        mvid: z.union([z.number(), z.string()]).describe("MV ID"),
+        mvid: z.union([z.number(), z.string()]),
       },
     },
     async ({ mvid }) =>
@@ -77,14 +77,14 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_mv_first",
     {
-      description: "Use when the user wants the latest MVs by region.",
+      description: "mv first",
       annotations: readOnlyAnnotations,
       inputSchema: {
         area: z.enum(["全部", "内地", "港台", "欧美", "韩国", "日本"]).default("全部"),
         limit: z
           .union([z.number().int(), z.string()])
           .default(20)
-          .describe("Result limit"),
+          ,
       },
     },
     async ({ area, limit }) =>
@@ -94,7 +94,7 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_mv_exclusive_rcmd",
     {
-      description: "Use when the user wants exclusive MV recommendations.",
+      description: "mv exclusive rcmd",
       annotations: readOnlyAnnotations,
       inputSchema: {
         limit: z.number().int().min(1).max(100).default(20),
@@ -108,14 +108,14 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_mv_url",
     {
-      description: "Use when an MV ID is known and the user wants a playable MV URL.",
+      description: "mv url",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("MV ID"),
+        id: z.union([z.number(), z.string()]),
         r: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional resolution, such as 240, 480, 720, or 1080"),
+          ,
       },
     },
     async ({ id, r }) => call("netease_mv_url", () => ncm.call("mv_url", { id, r })),
@@ -124,10 +124,10 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_related_allvideo",
     {
-      description: "Use when a video or MV-related resource ID is known and the user wants related videos.",
+      description: "related allvideo",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Video or related resource ID"),
+        id: z.union([z.number(), z.string()]),
       },
     },
     async ({ id }) =>
@@ -137,7 +137,7 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_banner",
     {
-      description: "Use when the user wants current public NetEase homepage banner items.",
+      description: "banner",
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
@@ -147,10 +147,10 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_video_detail",
     {
-      description: "Use when a video ID is known and the user wants video detail information.",
+      description: "video detail",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.string().min(1).describe("Video ID"),
+        id: z.string().min(1),
       },
     },
     async ({ id }) =>
@@ -160,10 +160,10 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_video_detail_info",
     {
-      description: "Use when a video ID is known and the user wants supplementary video detail information.",
+      description: "video detail info",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        vid: z.string().min(1).describe("Video ID"),
+        vid: z.string().min(1),
       },
     },
     async ({ vid }) =>
@@ -177,10 +177,10 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_video_url",
     {
-      description: "Use when a video ID is known and the user wants a playable video URL.",
+      description: "video url",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.string().min(1).describe("Video ID"),
+        id: z.string().min(1),
       },
     },
     async ({ id }) => call("netease_video_url", () => ncm.call("video_url", { id })),
@@ -189,7 +189,7 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_video_category_list",
     {
-      description: "Use when the user wants available video categories with pagination support.",
+      description: "video category list",
       annotations: readOnlyAnnotations,
       inputSchema: {
         limit: z.number().int().min(1).max(100).default(50),
@@ -203,7 +203,7 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_video_group_list",
     {
-      description: "Use when the user wants available video groups or video channel categories.",
+      description: "video group list",
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
@@ -213,14 +213,14 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_video_group",
     {
-      description: "Use when a video group ID is known and the user wants videos from that group.",
+      description: "video group",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.string().min(1).describe("Video group ID"),
+        id: z.string().min(1),
         offset: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional pagination offset"),
+          ,
       },
     },
     async ({ id, offset }) => call("netease_video_group", () => ncm.call("video_group", { id, offset }), mapVideoListSummary),
@@ -229,13 +229,13 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_video_timeline_all",
     {
-      description: "Use when the user wants the public all-video timeline feed.",
+      description: "video timeline all",
       annotations: readOnlyAnnotations,
       inputSchema: {
         offset: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional pagination offset"),
+          ,
       },
     },
     async ({ offset }) =>
@@ -245,13 +245,13 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_video_timeline_recommend",
     {
-      description: "Use when the user wants the recommended video timeline feed.",
+      description: "video timeline recommend",
       annotations: readOnlyAnnotations,
       inputSchema: {
         offset: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional pagination offset"),
+          ,
       },
     },
     async ({ offset }) =>
@@ -265,7 +265,7 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_video_recent",
     {
-      description: "Use when the user wants recently played or recent playlist-associated videos for the bound NetEase account. Requires a bound NetEase account.",
+      description: "playlist video recent [login]",
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },

@@ -6,10 +6,10 @@ export const registerCommentTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_comment_playlist",
     {
-      description: "Use when a playlist ID is known and the user wants public comments for that playlist.",
+      description: "comment playlist",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        id: z.union([z.number(), z.string()]),
         limit: z.number().int().min(1).max(100).default(20),
         offset: z.number().int().min(0).default(0),
       },
@@ -23,16 +23,16 @@ export const registerCommentTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_comment_music",
     {
-      description: "Use when a song ID is known and the user wants public comments for that song.",
+      description: "comment music",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Song ID"),
+        id: z.union([z.number(), z.string()]),
         limit: z.number().int().min(1).max(100).default(20),
         offset: z.number().int().min(0).default(0),
         before: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional upstream pagination cursor"),
+          ,
       },
     },
     async ({ id, limit, offset, before }) =>
@@ -44,16 +44,16 @@ export const registerCommentTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_comment_album",
     {
-      description: "Use when an album ID is known and the user wants public comments for that album.",
+      description: "comment album",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Album ID"),
+        id: z.union([z.number(), z.string()]),
         limit: z.number().int().min(1).max(100).default(20),
         offset: z.number().int().min(0).default(0),
         before: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional upstream pagination cursor"),
+          ,
       },
     },
     async ({ id, limit, offset, before }) =>
@@ -65,16 +65,16 @@ export const registerCommentTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_comment_mv",
     {
-      description: "Use when an MV ID is known and the user wants public comments for that MV.",
+      description: "comment mv",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("MV ID"),
+        id: z.union([z.number(), z.string()]),
         limit: z.number().int().min(1).max(100).default(20),
         offset: z.number().int().min(0).default(0),
         before: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional upstream pagination cursor"),
+          ,
       },
     },
     async ({ id, limit, offset, before }) =>
@@ -86,16 +86,16 @@ export const registerCommentTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_comment_video",
     {
-      description: "Use when a video ID is known and the user wants public comments for that video.",
+      description: "comment video",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Video ID"),
+        id: z.union([z.number(), z.string()]),
         limit: z.number().int().min(1).max(100).default(20),
         offset: z.number().int().min(0).default(0),
         before: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional upstream pagination cursor"),
+          ,
       },
     },
     async ({ id, limit, offset, before }) =>
@@ -107,19 +107,19 @@ export const registerCommentTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_comment_hot",
     {
-      description: "Use when the user wants hot comments for a known song, MV, playlist, album, radio, video, or event target.",
+      description: "comment hot",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Target ID"),
+        id: z.union([z.number(), z.string()]),
         type: z
           .enum(["0", "1", "2", "3", "4", "5", "6"])
-          .describe("Target type: 0=song, 1=mv, 2=playlist, 3=album, 4=dj, 5=video, 6=event"),
+          ,
         limit: z.number().int().min(1).max(100).default(20),
         offset: z.number().int().min(0).default(0),
         before: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional upstream pagination cursor"),
+          ,
       },
     },
     async ({ id, type, limit, offset, before }) =>
@@ -131,22 +131,22 @@ export const registerCommentTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_comment_floor",
     {
-      description: "Use when a parent comment is known and the user wants floor replies for a song, MV, playlist, album, radio, video, or event.",
+      description: "comment floor",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Target ID"),
-        parentCommentId: z.union([z.number(), z.string()]).describe("Parent comment ID"),
+        id: z.union([z.number(), z.string()]),
+        parentCommentId: z.union([z.number(), z.string()]),
         type: z
           .enum(["0", "1", "2", "3", "4", "5", "6"])
-          .describe("Target type: 0=song, 1=mv, 2=playlist, 3=album, 4=dj, 5=video, 6=event"),
+          ,
         limit: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional reply count limit"),
+          ,
         time: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional pagination time cursor"),
+          ,
       },
     },
     async ({ id, parentCommentId, type, limit, time }) =>

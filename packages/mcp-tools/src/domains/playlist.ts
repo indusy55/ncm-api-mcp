@@ -23,15 +23,15 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_detail",
     {
-      description: "Use when a playlist ID is known and the user wants playlist metadata and tracks.",
+      description: "playlist detail",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        id: z.union([z.number(), z.string()]),
         s: z
           .number()
           .int()
           .optional()
-          .describe("Number of tracks to return (default all)"),
+          ,
       },
     },
     async ({ id, s }) =>
@@ -45,14 +45,14 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_detail_dynamic",
     {
-      description: "Use when a playlist ID is known and the user wants dynamic playlist data such as share, comment, or subscription counts.",
+      description: "playlist detail dynamic",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        id: z.union([z.number(), z.string()]),
         s: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional upstream detail flag"),
+          ,
       },
     },
     async ({ id, s }) =>
@@ -66,10 +66,10 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_detail_rcmd_get",
     {
-      description: "Use when a playlist ID is known and the user wants related playlist recommendations for that playlist.",
+      description: "playlist detail rcmd get",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        id: z.union([z.number(), z.string()]),
       },
     },
     async ({ id }) =>
@@ -83,14 +83,14 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_track_all",
     {
-      description: "Use when a playlist ID is known and the user wants the full playlist track list with pagination support.",
+      description: "playlist track all",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        id: z.union([z.number(), z.string()]),
         s: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional extra detail flag used by the upstream API"),
+          ,
         limit: z.number().int().min(1).max(1000).default(100),
         offset: z.number().int().min(0).default(0),
       },
@@ -106,7 +106,7 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_catlist",
     {
-      description: "Use when the user wants the full NetEase playlist category list.",
+      description: "playlist catlist",
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
@@ -116,7 +116,7 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_category_list",
     {
-      description: "Use when the user wants playlist category metadata or grouped category information.",
+      description: "playlist category list",
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
@@ -127,7 +127,7 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_hot",
     {
-      description: "Use when the user wants current hot playlist tags or popular playlist categories.",
+      description: "playlist hot",
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
@@ -137,7 +137,7 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_highquality_tags",
     {
-      description: "Use when the user wants available tags for high-quality featured playlists.",
+      description: "playlist highquality tags",
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
@@ -148,10 +148,10 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_subscribers",
     {
-      description: "Use when a playlist ID is known and the user wants users who subscribed to that playlist.",
+      description: "playlist subscribers",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        id: z.union([z.number(), z.string()]),
         limit: z.number().int().min(1).max(100).default(20),
         offset: z.number().int().min(0).default(0),
       },
@@ -167,10 +167,10 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_simi_playlist",
     {
-      description: "Use when a playlist ID is known and the user wants similar playlists.",
+      description: "simi playlist",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        id: z.union([z.number(), z.string()]),
         limit: z.number().int().min(1).max(100).default(20),
         offset: z.number().int().min(0).default(0),
       },
@@ -186,18 +186,18 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_create",
     {
-      description: "Use only when the user explicitly asks to create a playlist. This creates a new playlist on the bound NetEase account.",
+      description: "playlist create [write]",
       annotations: writeAnnotations,
       inputSchema: {
-        name: z.string().min(1).max(200).describe("Playlist name"),
+        name: z.string().min(1).max(200),
         privacy: z
           .enum(["0", "10"])
           .default("0")
-          .describe("0=public/default, 10=private"),
+          ,
         type: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional upstream playlist type"),
+          ,
       },
     },
     async ({ name, privacy, type }) =>
@@ -211,10 +211,10 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_delete",
     {
-      description: "Use only when the user explicitly asks to delete a playlist. This permanently deletes a playlist owned by the bound NetEase account.",
+      description: "playlist delete [write]",
       annotations: writeAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        id: z.union([z.number(), z.string()]),
       },
     },
     async ({ id }) =>
@@ -224,11 +224,11 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_name_update",
     {
-      description: "Use only when the user explicitly asks to rename a playlist. This updates playlist metadata on the bound NetEase account.",
+      description: "playlist name update [write]",
       annotations: writeAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
-        name: z.string().min(1).max(200).describe("New playlist name"),
+        id: z.union([z.number(), z.string()]),
+        name: z.string().min(1).max(200),
       },
     },
     async ({ id, name }) =>
@@ -242,11 +242,11 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_desc_update",
     {
-      description: "Use only when the user explicitly asks to change a playlist description. This updates playlist metadata on the bound NetEase account.",
+      description: "playlist desc update [write]",
       annotations: writeAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
-        desc: z.string().min(1).max(2000).describe("New playlist description"),
+        id: z.union([z.number(), z.string()]),
+        desc: z.string().min(1).max(2000),
       },
     },
     async ({ id, desc }) =>
@@ -260,15 +260,15 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_tags_update",
     {
-      description: "Use only when the user explicitly asks to change playlist tags. This updates playlist metadata on the bound NetEase account.",
+      description: "playlist tags update [write]",
       annotations: writeAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        id: z.union([z.number(), z.string()]),
         tags: z
           .string()
           .min(1)
           .max(200)
-          .describe("Comma-separated playlist tags, for example '流行,华语'"),
+          ,
       },
     },
     async ({ id, tags }) =>
@@ -282,17 +282,17 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_update",
     {
-      description: "Use only when the user explicitly asks to update multiple playlist metadata fields together. This changes playlist metadata on the bound NetEase account.",
+      description: "playlist update [write]",
       annotations: writeAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
-        name: z.string().min(1).max(200).describe("Playlist name"),
-        desc: z.string().max(2000).optional().describe("Optional playlist description"),
+        id: z.union([z.number(), z.string()]),
+        name: z.string().min(1).max(200),
+        desc: z.string().max(2000).optional(),
         tags: z
           .string()
           .max(200)
           .optional()
-          .describe("Optional comma-separated playlist tags"),
+          ,
       },
     },
     async ({ id, name, desc, tags }) =>
@@ -306,11 +306,11 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_subscribe",
     {
-      description: "Use only when the user explicitly asks to subscribe or unsubscribe a playlist. This changes the bound NetEase account's playlist subscriptions.",
+      description: "playlist subscribe [write]",
       annotations: writeAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
-        subscribe: z.boolean().default(true).describe("true=subscribe, false=unsubscribe"),
+        id: z.union([z.number(), z.string()]),
+        subscribe: z.boolean().default(true),
       },
     },
     async ({ id, subscribe }) =>
@@ -324,14 +324,14 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_track_add",
     {
-      description: "Use only when the user explicitly asks to add songs to a playlist. This modifies playlist contents on the bound NetEase account.",
+      description: "playlist track add [write]",
       annotations: writeAnnotations,
       inputSchema: {
-        pid: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        pid: z.union([z.number(), z.string()]),
         tracks: z
           .string()
           .min(1)
-          .describe("Comma-separated song IDs to add, for example '33894312,33894313'"),
+          ,
       },
     },
     async ({ pid, tracks }) =>
@@ -345,14 +345,14 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_track_delete",
     {
-      description: "Use only when the user explicitly asks to remove songs from a playlist. This modifies playlist contents on the bound NetEase account.",
+      description: "playlist track delete [write]",
       annotations: writeAnnotations,
       inputSchema: {
-        pid: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        pid: z.union([z.number(), z.string()]),
         tracks: z
           .string()
           .min(1)
-          .describe("Comma-separated song IDs to remove, for example '33894312,33894313'"),
+          ,
       },
     },
     async ({ pid, tracks }) =>
@@ -366,17 +366,17 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_mylike",
     {
-      description: "Use when the user wants liked playlist-related activity for the bound NetEase account. Requires a bound NetEase account.",
+      description: "playlist mylike [login]",
       annotations: readOnlyAnnotations,
       inputSchema: {
         time: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional pagination time cursor"),
+          ,
         limit: z
           .union([z.number().int(), z.string()])
           .default(12)
-          .describe("Result limit"),
+          ,
       },
     },
     async ({ time, limit }) =>
@@ -390,20 +390,20 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_import_name_task_create",
     {
-      description: "Use only when the user explicitly asks to import a playlist from text, links, or local metadata. This creates an import task on the bound NetEase account.",
+      description: "playlist import name task create [write]",
       annotations: writeAnnotations,
       inputSchema: {
-        importStarPlaylist: z.boolean().optional().describe("Whether to import liked songs"),
-        playlistName: z.string().optional().describe("Playlist name for text or link import"),
-        text: z.string().optional().describe("Raw text content to import"),
+        importStarPlaylist: z.boolean().optional(),
+        playlistName: z.string().optional(),
+        text: z.string().optional(),
         link: z
           .string()
           .optional()
-          .describe("JSON string array of links to import, for example '[\"https://...\"]'"),
+          ,
         local: z
           .string()
           .optional()
-          .describe("JSON string array of local metadata objects with name, artist, and album"),
+          ,
       },
     },
     async ({ importStarPlaylist, playlistName, text, link, local }) =>
@@ -421,10 +421,10 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_import_task_status",
     {
-      description: "Use when an import task ID is known and the user wants playlist import task status.",
+      description: "playlist import task status",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Playlist import task ID"),
+        id: z.union([z.number(), z.string()]),
       },
     },
     async ({ id }) =>
@@ -436,13 +436,13 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_order_update",
     {
-      description: "Use only when the user explicitly asks to reorder playlists. This changes playlist ordering on the bound NetEase account.",
+      description: "playlist order update [write]",
       annotations: writeAnnotations,
       inputSchema: {
         ids: z
           .string()
           .min(1)
-          .describe("Comma-separated playlist IDs in the desired order"),
+          ,
       },
     },
     async ({ ids }) =>
@@ -452,10 +452,10 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_playlist_update_playcount",
     {
-      description: "Use only when the user explicitly asks to update or check in playlist playcount behavior. This triggers a playlist playcount update on the bound NetEase account.",
+      description: "playlist update playcount [write]",
       annotations: writeAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]).describe("Playlist ID"),
+        id: z.union([z.number(), z.string()]),
       },
     },
     async ({ id }) =>
@@ -467,13 +467,13 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_top_playlist",
     {
-      description: "Use when the user wants to discover public NetEase playlists by category, popularity, or newest order.",
+      description: "top playlist",
       annotations: readOnlyAnnotations,
       inputSchema: {
         cat: z
           .string()
           .default("全部")
-          .describe("Category: 全部, 华语, 欧美, 日语, 韩语, 流行, 摇滚, etc."),
+          ,
         order: z.enum(["hot", "new"]).default("hot"),
         limit: z.number().int().min(1).max(50).default(20),
         offset: z.number().int().min(0).default(0),
@@ -490,14 +490,14 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_top_playlist_highquality",
     {
-      description: "Use when the user wants featured high-quality NetEase playlists by category.",
+      description: "top playlist highquality",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        cat: z.string().default("全部").describe("Playlist category"),
+        cat: z.string().default("全部"),
         before: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional upstream pagination cursor"),
+          ,
         limit: z.number().int().min(1).max(100).default(20),
       },
     },
@@ -512,7 +512,7 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_toplist",
     {
-      description: "Use when the user wants the NetEase ranking board summary or available chart list.",
+      description: "toplist",
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
@@ -522,7 +522,7 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_toplist_detail",
     {
-      description: "Use when the user wants detailed NetEase ranking board metadata and chart contents.",
+      description: "toplist detail",
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },

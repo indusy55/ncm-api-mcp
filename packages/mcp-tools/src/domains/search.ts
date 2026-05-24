@@ -15,14 +15,14 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_search",
     {
-      description: "Use when the user wants to search NetEase songs, albums, artists, playlists, users, MVs, lyrics, or radios by keyword.",
+      description: "search",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        keywords: z.string().min(1).max(100).describe("Search keywords"),
+        keywords: z.string().min(1).max(100),
         type: z
           .enum(["1", "10", "100", "1000", "1002", "1004", "1006", "1009"])
           .default("1")
-          .describe("Search type: 1=song, 10=album, 100=artist, 1000=playlist, 1002=user, 1004=MV, 1006=lyric, 1009=radio"),
+          ,
         limit: z.number().int().min(1).max(100).default(30),
         offset: z.number().int().min(0).default(0),
       },
@@ -38,14 +38,14 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_search_legacy",
     {
-      description: "Use when the user wants the upstream NetEase search endpoint directly, including additional types such as video or voice search.",
+      description: "search legacy",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        keywords: z.string().min(1).max(100).describe("Search keywords"),
+        keywords: z.string().min(1).max(100),
         type: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Search type, such as 1=song, 10=album, 100=artist, 1000=playlist, 1014=video, 2000=voice"),
+          ,
         limit: z.number().int().min(1).max(100).default(30),
         offset: z.number().int().min(0).default(0),
       },
@@ -61,11 +61,11 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_search_suggest",
     {
-      description: "Use when the user wants autocomplete suggestions or likely matches for a search keyword.",
+      description: "search suggest",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        keywords: z.string().min(1).max(100).describe("Search keywords"),
-        type: z.enum(["mobile", "web"]).default("mobile").describe("Suggestion mode"),
+        keywords: z.string().min(1).max(100),
+        type: z.enum(["mobile", "web"]).default("mobile"),
       },
     },
     async ({ keywords, type }) =>
@@ -79,11 +79,11 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_search_multimatch",
     {
-      description: "Use when the user wants mixed search matches across multiple content types for one keyword.",
+      description: "search multimatch",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        keywords: z.string().min(1).max(100).describe("Search keywords"),
-        type: z.number().int().optional().describe("Optional multimatch type flag"),
+        keywords: z.string().min(1).max(100),
+        type: z.number().int().optional(),
       },
     },
     async ({ keywords, type }) =>
@@ -97,17 +97,17 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_search_match",
     {
-      description: "Use when the user wants to match a local audio file's metadata to NetEase music information.",
+      description: "search match",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        title: z.string().default("").describe("Track title"),
-        album: z.string().default("").describe("Album name"),
-        artist: z.string().default("").describe("Artist name"),
+        title: z.string().default(""),
+        album: z.string().default(""),
+        artist: z.string().default(""),
         duration: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional duration in milliseconds"),
-        md5: z.string().optional().describe("Optional local file MD5 or persist identifier"),
+          ,
+        md5: z.string().optional(),
       },
     },
     async ({ title, album, artist, duration, md5 }) =>
@@ -119,10 +119,10 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_search_suggest_pc",
     {
-      description: "Use when the user wants PC-side search suggestions from NetEase.",
+      description: "search suggest pc",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        keyword: z.string().min(1).max(100).describe("Search keyword"),
+        keyword: z.string().min(1).max(100),
       },
     },
     async ({ keyword }) =>
@@ -136,7 +136,7 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_search_hot",
     {
-      description: "Use when the user wants current NetEase hot search keywords.",
+      description: "search hot",
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
@@ -146,7 +146,7 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_search_hot_detail",
     {
-      description: "Use when the user wants detailed current NetEase hot search topics.",
+      description: "search hot detail",
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
@@ -157,7 +157,7 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_search_default",
     {
-      description: "Use when the user wants the default NetEase search keyword or placeholder suggestion.",
+      description: "search default",
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
@@ -167,7 +167,7 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_personalized",
     {
-      description: "Use when the user wants public personalized discovery playlists from NetEase.",
+      description: "personalized",
       annotations: readOnlyAnnotations,
       inputSchema: {
         limit: z.number().int().min(1).max(50).default(30),
@@ -184,13 +184,13 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_personalized_newsong",
     {
-      description: "Use when the user wants personalized new song recommendations.",
+      description: "personalized newsong",
       annotations: readOnlyAnnotations,
       inputSchema: {
         area: z
           .union([z.number().int(), z.string()])
           .optional()
-          .describe("Optional area code used by the upstream API"),
+          ,
         limit: z.number().int().min(1).max(50).default(10),
       },
     },
@@ -205,7 +205,7 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
     "netease_personalized_mv",
     {
-      description: "Use when the user wants recommended personalized MVs.",
+      description: "personalized mv",
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
