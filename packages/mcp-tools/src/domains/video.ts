@@ -11,127 +11,128 @@ import {
   mapVideoListSummary,
 } from "../mappers/summary.js";
 
+const mvMode = z.enum([
+  "list",
+  "top",
+  "latest",
+  "exclusive",
+  "detail",
+  "detail_info",
+  "url",
+]);
+
+const videoMode = z.enum([
+  "detail",
+  "detail_info",
+  "url",
+  "related",
+]);
+
+const videoFeedMode = z.enum([
+  "category_list",
+  "group_list",
+  "group",
+  "timeline_all",
+  "timeline_recommend",
+  "recent",
+]);
+
 export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
-    "netease_top_mv",
+    "netease_mv",
     {
-      description: "top mv",
+      description: "mv",
       annotations: readOnlyAnnotations,
       inputSchema: {
+        mode: mvMode.default("list"),
+        id: z.union([z.number(), z.string()]).optional(),
+        mvid: z.union([z.number(), z.string()]).optional(),
         area: z.enum(["全部", "内地", "港台", "欧美", "日本", "韩国"]).default("全部"),
-        limit: z.number().int().min(1).max(100).default(20),
-        offset: z.number().int().min(0).default(0),
-      },
-    },
-    async ({ area, limit, offset }) =>
-      call("netease_top_mv", () => ncm.call("top_mv", { area, limit, offset }), mapMvListSummary),
-  );
-
-  server.registerTool(
-    "netease_mv_all",
-    {
-      description: "mv all",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        area: z.enum(["全部", "内地", "港台", "欧美", "韩国", "日本"]).default("全部"),
         type: z.enum(["全部", "官方版", "原生", "现场版", "网易出品"]).default("全部"),
         order: z.enum(["上升最快", "最热", "最新"]).default("最热"),
-        limit: z.number().int().min(1).max(100).default(20),
+        limit: z.union([z.number().int(), z.string()]).default(10),
         offset: z.number().int().min(0).default(0),
+        r: z.union([z.number().int(), z.string()]).optional(),
       },
     },
-    async ({ area, type, order, limit, offset }) =>
-      call("netease_mv_all", () => ncm.call("mv_all", { area, type, order, limit, offset }), mapMvListSummary),
+    async ({ mode, id, mvid, area, type, order, limit, offset, r }) => {
+      const mvId = mvid ?? id;
+      switch (mode) {
+        case "top":
+          return call("netease_mv", () => ncm.call("top_mv", { area, limit, offset }), mapMvListSummary);
+        case "latest":
+          return call("netease_mv", () => ncm.call("mv_first", { area, limit }), mapMvListSummary);
+        case "exclusive":
+          return call("netease_mv", () => ncm.call("mv_exclusive_rcmd", { limit, offset }), mapMvListSummary);
+        case "detail":
+          return call("netease_mv", () => ncm.call("mv_detail", { mvid: mvId }), mapMvDetailSummary);
+        case "detail_info":
+          return call("netease_mv", () => ncm.call("mv_detail_info", { mvid: mvId }), mapMvDetailInfoSummary);
+        case "url":
+          return call("netease_mv", () => ncm.call("mv_url", { id: mvId, r }));
+        case "list":
+        default:
+          return call("netease_mv", () => ncm.call("mv_all", { area, type, order, limit, offset }), mapMvListSummary);
+      }
+    },
   );
 
   server.registerTool(
-    "netease_mv_detail",
+    "netease_video",
     {
-      description: "mv detail",
+      description: "video",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        mvid: z.union([z.number(), z.string()]),
+        mode: videoMode.default("detail"),
+        id: z.union([z.string(), z.number(), z.string()]).optional(),
+        vid: z.string().optional(),
       },
     },
-    async ({ mvid }) =>
-      call("netease_mv_detail", () => ncm.call("mv_detail", { mvid }), mapMvDetailSummary),
+    async ({ mode, id, vid }) => {
+      const videoId = vid ?? (typeof id === "string" ? id : String(id ?? ""));
+      switch (mode) {
+        case "detail_info":
+          return call("netease_video", () => ncm.call("video_detail_info", { vid: videoId }), mapVideoDetailInfoSummary);
+        case "url":
+          return call("netease_video", () => ncm.call("video_url", { id: videoId }));
+        case "related":
+          return call("netease_video", () => ncm.call("related_allvideo", { id: id ?? videoId }), mapVideoListSummary);
+        case "detail":
+        default:
+          return call("netease_video", () => ncm.call("video_detail", { id: videoId }), mapVideoDetailSummary);
+      }
+    },
   );
 
   server.registerTool(
-    "netease_mv_detail_info",
+    "netease_video_feed",
     {
-      description: "mv detail info",
+      description: "video feed",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        mvid: z.union([z.number(), z.string()]),
+        mode: videoFeedMode.default("timeline_recommend"),
+        id: z.string().optional(),
+        limit: z.number().int().min(1).max(100).default(10),
+        offset: z.union([z.number().int(), z.string()]).optional(),
       },
     },
-    async ({ mvid }) =>
-      call(
-        "netease_mv_detail_info",
-        () => ncm.call("mv_detail_info", { mvid }),
-        mapMvDetailInfoSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_mv_first",
-    {
-      description: "mv first",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        area: z.enum(["全部", "内地", "港台", "欧美", "韩国", "日本"]).default("全部"),
-        limit: z
-          .union([z.number().int(), z.string()])
-          .default(20)
-          ,
-      },
+    async ({ mode, id, limit, offset }) => {
+      switch (mode) {
+        case "category_list":
+          return call("netease_video_feed", () => ncm.call("video_category_list", { limit, offset }), mapVideoListSummary);
+        case "group_list":
+          return call("netease_video_feed", () => ncm.call("video_group_list"), mapVideoListSummary);
+        case "group":
+          return call("netease_video_feed", () => ncm.call("video_group", { id: id ?? "", offset }), mapVideoListSummary);
+        case "timeline_all":
+          return call("netease_video_feed", () => ncm.call("video_timeline_all", { offset }), mapVideoListSummary);
+        case "recent":
+          return call("netease_video_feed", () => ncm.call("playlist_video_recent"), mapVideoListSummary);
+        case "timeline_recommend":
+        default:
+          return call("netease_video_feed", () => ncm.call("video_timeline_recommend", { offset }), mapVideoListSummary);
+      }
     },
-    async ({ area, limit }) =>
-      call("netease_mv_first", () => ncm.call("mv_first", { area, limit }), mapMvListSummary),
-  );
-
-  server.registerTool(
-    "netease_mv_exclusive_rcmd",
-    {
-      description: "mv exclusive rcmd",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        limit: z.number().int().min(1).max(100).default(20),
-        offset: z.number().int().min(0).default(0),
-      },
-    },
-    async ({ limit, offset }) =>
-      call("netease_mv_exclusive_rcmd", () => ncm.call("mv_exclusive_rcmd", { limit, offset }), mapMvListSummary),
-  );
-
-  server.registerTool(
-    "netease_mv_url",
-    {
-      description: "mv url",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        id: z.union([z.number(), z.string()]),
-        r: z
-          .union([z.number().int(), z.string()])
-          .optional()
-          ,
-      },
-    },
-    async ({ id, r }) => call("netease_mv_url", () => ncm.call("mv_url", { id, r })),
-  );
-
-  server.registerTool(
-    "netease_related_allvideo",
-    {
-      description: "related allvideo",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        id: z.union([z.number(), z.string()]),
-      },
-    },
-    async ({ id }) =>
-      call("netease_related_allvideo", () => ncm.call("related_allvideo", { id }), mapVideoListSummary),
   );
 
   server.registerTool(
@@ -142,134 +143,5 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
       inputSchema: {},
     },
     async () => call("netease_banner", () => ncm.call("banner"), mapBannerSummary),
-  );
-
-  server.registerTool(
-    "netease_video_detail",
-    {
-      description: "video detail",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        id: z.string().min(1),
-      },
-    },
-    async ({ id }) =>
-      call("netease_video_detail", () => ncm.call("video_detail", { id }), mapVideoDetailSummary),
-  );
-
-  server.registerTool(
-    "netease_video_detail_info",
-    {
-      description: "video detail info",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        vid: z.string().min(1),
-      },
-    },
-    async ({ vid }) =>
-      call(
-        "netease_video_detail_info",
-        () => ncm.call("video_detail_info", { vid }),
-        mapVideoDetailInfoSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_video_url",
-    {
-      description: "video url",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        id: z.string().min(1),
-      },
-    },
-    async ({ id }) => call("netease_video_url", () => ncm.call("video_url", { id })),
-  );
-
-  server.registerTool(
-    "netease_video_category_list",
-    {
-      description: "video category list",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        limit: z.number().int().min(1).max(100).default(50),
-        offset: z.number().int().min(0).default(0),
-      },
-    },
-    async ({ limit, offset }) =>
-      call("netease_video_category_list", () => ncm.call("video_category_list", { limit, offset }), mapVideoListSummary),
-  );
-
-  server.registerTool(
-    "netease_video_group_list",
-    {
-      description: "video group list",
-      annotations: readOnlyAnnotations,
-      inputSchema: {},
-    },
-    async () => call("netease_video_group_list", () => ncm.call("video_group_list"), mapVideoListSummary),
-  );
-
-  server.registerTool(
-    "netease_video_group",
-    {
-      description: "video group",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        id: z.string().min(1),
-        offset: z
-          .union([z.number().int(), z.string()])
-          .optional()
-          ,
-      },
-    },
-    async ({ id, offset }) => call("netease_video_group", () => ncm.call("video_group", { id, offset }), mapVideoListSummary),
-  );
-
-  server.registerTool(
-    "netease_video_timeline_all",
-    {
-      description: "video timeline all",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        offset: z
-          .union([z.number().int(), z.string()])
-          .optional()
-          ,
-      },
-    },
-    async ({ offset }) =>
-      call("netease_video_timeline_all", () => ncm.call("video_timeline_all", { offset }), mapVideoListSummary),
-  );
-
-  server.registerTool(
-    "netease_video_timeline_recommend",
-    {
-      description: "video timeline recommend",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        offset: z
-          .union([z.number().int(), z.string()])
-          .optional()
-          ,
-      },
-    },
-    async ({ offset }) =>
-      call(
-        "netease_video_timeline_recommend",
-        () => ncm.call("video_timeline_recommend", { offset }),
-        mapVideoListSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_playlist_video_recent",
-    {
-      description: "playlist video recent [login]",
-      annotations: readOnlyAnnotations,
-      inputSchema: {},
-    },
-    async () =>
-      call("netease_playlist_video_recent", () => ncm.call("playlist_video_recent"), mapVideoListSummary),
   );
 };

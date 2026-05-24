@@ -39,7 +39,7 @@ export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
         type: z.enum(["hot", "new"]).default("new"),
         year: z.string().optional(),
         mouth: z.string().optional(),
-        limit: z.number().int().min(1).max(100).default(20),
+        limit: z.number().int().min(1).max(100).default(10),
         offset: z.number().int().min(0).default(0),
       },
     },
@@ -88,7 +88,7 @@ export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {
         area: z.enum(["ALL", "ZH", "EA", "KR", "JP"]).default("ALL"),
-        limit: z.number().int().min(1).max(100).default(20),
+        limit: z.number().int().min(1).max(100).default(10),
         offset: z.number().int().min(0).default(0),
       },
     },
@@ -104,7 +104,7 @@ export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
       inputSchema: {
         area: z.enum(["ALL", "ZH", "EA", "KR", "JP"]).default("ALL"),
         type: z.string().default("hot"),
-        limit: z.number().int().min(1).max(100).default(20),
+        limit: z.number().int().min(1).max(100).default(10),
         offset: z.number().int().min(0).default(0),
       },
     },
@@ -186,7 +186,7 @@ export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
       description: "album sublist [login]",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        limit: z.number().int().min(1).max(100).default(25),
+        limit: z.number().int().min(1).max(100).default(10),
         offset: z.number().int().min(0).default(0),
       },
     },

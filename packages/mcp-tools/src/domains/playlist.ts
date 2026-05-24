@@ -19,167 +19,173 @@ import {
   mapWriteActionSummary,
 } from "../mappers/summary.js";
 
+const playlistReadMode = z.enum([
+  "detail",
+  "dynamic",
+  "related",
+  "tracks",
+  "subscribers",
+  "similar",
+]);
+
+const playlistDiscoverMode = z.enum([
+  "catlist",
+  "category_list",
+  "hot_tags",
+  "highquality_tags",
+  "top",
+  "top_highquality",
+  "toplist",
+  "toplist_detail",
+]);
+
 export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
-    "netease_playlist_detail",
+    "netease_playlist_read",
     {
-      description: "playlist detail",
+      description: "playlist read",
       annotations: readOnlyAnnotations,
       inputSchema: {
+        mode: playlistReadMode.default("detail"),
         id: z.union([z.number(), z.string()]),
-        s: z
-          .number()
-          .int()
-          .optional()
-          ,
+        s: z.union([z.number().int(), z.string()]).optional(),
+        limit: z.number().int().min(1).max(1000).default(10),
+        offset: z.number().int().min(0).default(0),
       },
     },
-    async ({ id, s }) =>
-      call(
-        "netease_playlist_detail",
-        () => ncm.call("playlist_detail", { id, s }),
-        mapPlaylistDetailSummary,
-      ),
+    async ({ mode, id, s, limit, offset }) => {
+      switch (mode) {
+        case "dynamic":
+          return call(
+            "netease_playlist_read",
+            () => ncm.call("playlist_detail_dynamic", { id, s }),
+            mapPlaylistDynamicSummary,
+          );
+        case "related":
+          return call(
+            "netease_playlist_read",
+            () => ncm.call("playlist_detail_rcmd_get", { id }),
+            mapPlaylistListSummary,
+          );
+        case "tracks":
+          return call(
+            "netease_playlist_read",
+            () => ncm.call("playlist_track_all", { id, s, limit, offset }),
+            mapPlaylistTrackAllSummary,
+          );
+        case "subscribers":
+          return call(
+            "netease_playlist_read",
+            () => ncm.call("playlist_subscribers", { id, limit, offset }),
+            mapPlaylistSubscribersSummary,
+          );
+        case "similar":
+          return call(
+            "netease_playlist_read",
+            () => ncm.call("simi_playlist", { id, limit, offset }),
+            mapPlaylistListSummary,
+          );
+        case "detail":
+        default:
+          return call(
+            "netease_playlist_read",
+            () => ncm.call("playlist_detail", { id, s }),
+            mapPlaylistDetailSummary,
+          );
+      }
+    },
   );
 
   server.registerTool(
-    "netease_playlist_detail_dynamic",
+    "netease_playlist_discover",
     {
-      description: "playlist detail dynamic",
+      description: "playlist discover",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        id: z.union([z.number(), z.string()]),
-        s: z
+        mode: playlistDiscoverMode.default("top"),
+        cat: z.string().default("全部"),
+        order: z.enum(["hot", "new"]).default("hot"),
+        before: z.union([z.number().int(), z.string()]).optional(),
+        limit: z.number().int().min(1).max(100).default(10),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async ({ mode, cat, order, before, limit, offset }) => {
+      switch (mode) {
+        case "catlist":
+          return call(
+            "netease_playlist_discover",
+            () => ncm.call("playlist_catlist"),
+            mapPlaylistCategorySummary,
+          );
+        case "category_list":
+          return call(
+            "netease_playlist_discover",
+            () => ncm.call("playlist_category_list"),
+            mapPlaylistCategorySummary,
+          );
+        case "hot_tags":
+          return call(
+            "netease_playlist_discover",
+            () => ncm.call("playlist_hot"),
+            mapPlaylistTagSummary,
+          );
+        case "highquality_tags":
+          return call(
+            "netease_playlist_discover",
+            () => ncm.call("playlist_highquality_tags"),
+            mapPlaylistTagSummary,
+          );
+        case "top_highquality":
+          return call(
+            "netease_playlist_discover",
+            () => ncm.call("top_playlist_highquality", { cat, before, limit }),
+            mapTopPlaylistSummary,
+          );
+        case "toplist":
+          return call(
+            "netease_playlist_discover",
+            () => ncm.call("toplist"),
+            mapToplistSummary,
+          );
+        case "toplist_detail":
+          return call(
+            "netease_playlist_discover",
+            () => ncm.call("toplist_detail"),
+            mapToplistDetailSummary,
+          );
+        case "top":
+        default:
+          return call(
+            "netease_playlist_discover",
+            () => ncm.call("top_playlist", { cat, order, limit, offset }),
+            mapTopPlaylistSummary,
+          );
+      }
+    },
+  );
+
+  server.registerTool(
+    "netease_playlist_mylike",
+    {
+      description: "playlist mylike [login]",
+      annotations: readOnlyAnnotations,
+      inputSchema: {
+        time: z
           .union([z.number().int(), z.string()])
           .optional()
           ,
-      },
-    },
-    async ({ id, s }) =>
-      call(
-        "netease_playlist_detail_dynamic",
-        () => ncm.call("playlist_detail_dynamic", { id, s }),
-        mapPlaylistDynamicSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_playlist_detail_rcmd_get",
-    {
-      description: "playlist detail rcmd get",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        id: z.union([z.number(), z.string()]),
-      },
-    },
-    async ({ id }) =>
-      call(
-        "netease_playlist_detail_rcmd_get",
-        () => ncm.call("playlist_detail_rcmd_get", { id }),
-        mapPlaylistListSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_playlist_track_all",
-    {
-      description: "playlist track all",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        id: z.union([z.number(), z.string()]),
-        s: z
+        limit: z
           .union([z.number().int(), z.string()])
-          .optional()
+          .default(12)
           ,
-        limit: z.number().int().min(1).max(1000).default(100),
-        offset: z.number().int().min(0).default(0),
       },
     },
-    async ({ id, s, limit, offset }) =>
+    async ({ time, limit }) =>
       call(
-        "netease_playlist_track_all",
-        () => ncm.call("playlist_track_all", { id, s, limit, offset }),
-        mapPlaylistTrackAllSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_playlist_catlist",
-    {
-      description: "playlist catlist",
-      annotations: readOnlyAnnotations,
-      inputSchema: {},
-    },
-    async () => call("netease_playlist_catlist", () => ncm.call("playlist_catlist"), mapPlaylistCategorySummary),
-  );
-
-  server.registerTool(
-    "netease_playlist_category_list",
-    {
-      description: "playlist category list",
-      annotations: readOnlyAnnotations,
-      inputSchema: {},
-    },
-    async () =>
-      call("netease_playlist_category_list", () => ncm.call("playlist_category_list"), mapPlaylistCategorySummary),
-  );
-
-  server.registerTool(
-    "netease_playlist_hot",
-    {
-      description: "playlist hot",
-      annotations: readOnlyAnnotations,
-      inputSchema: {},
-    },
-    async () => call("netease_playlist_hot", () => ncm.call("playlist_hot"), mapPlaylistTagSummary),
-  );
-
-  server.registerTool(
-    "netease_playlist_highquality_tags",
-    {
-      description: "playlist highquality tags",
-      annotations: readOnlyAnnotations,
-      inputSchema: {},
-    },
-    async () =>
-      call("netease_playlist_highquality_tags", () => ncm.call("playlist_highquality_tags"), mapPlaylistTagSummary),
-  );
-
-  server.registerTool(
-    "netease_playlist_subscribers",
-    {
-      description: "playlist subscribers",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        id: z.union([z.number(), z.string()]),
-        limit: z.number().int().min(1).max(100).default(20),
-        offset: z.number().int().min(0).default(0),
-      },
-    },
-    async ({ id, limit, offset }) =>
-      call(
-        "netease_playlist_subscribers",
-        () => ncm.call("playlist_subscribers", { id, limit, offset }),
-        mapPlaylistSubscribersSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_simi_playlist",
-    {
-      description: "simi playlist",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        id: z.union([z.number(), z.string()]),
-        limit: z.number().int().min(1).max(100).default(20),
-        offset: z.number().int().min(0).default(0),
-      },
-    },
-    async ({ id, limit, offset }) =>
-      call(
-        "netease_simi_playlist",
-        () => ncm.call("simi_playlist", { id, limit, offset }),
-        mapPlaylistListSummary,
+        "netease_playlist_mylike",
+        () => ncm.call("playlist_mylike", { time, limit }),
+        mapPlaylistMyLikeSummary,
       ),
   );
 
@@ -364,30 +370,6 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   );
 
   server.registerTool(
-    "netease_playlist_mylike",
-    {
-      description: "playlist mylike [login]",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        time: z
-          .union([z.number().int(), z.string()])
-          .optional()
-          ,
-        limit: z
-          .union([z.number().int(), z.string()])
-          .default(12)
-          ,
-      },
-    },
-    async ({ time, limit }) =>
-      call(
-        "netease_playlist_mylike",
-        () => ncm.call("playlist_mylike", { time, limit }),
-        mapPlaylistMyLikeSummary,
-      ),
-  );
-
-  server.registerTool(
     "netease_playlist_import_name_task_create",
     {
       description: "playlist import name task create [write]",
@@ -464,69 +446,4 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       ),
   );
 
-  server.registerTool(
-    "netease_top_playlist",
-    {
-      description: "top playlist",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        cat: z
-          .string()
-          .default("全部")
-          ,
-        order: z.enum(["hot", "new"]).default("hot"),
-        limit: z.number().int().min(1).max(50).default(20),
-        offset: z.number().int().min(0).default(0),
-      },
-    },
-    async ({ cat, order, limit, offset }) =>
-      call(
-        "netease_top_playlist",
-        () => ncm.call("top_playlist", { cat, order, limit, offset }),
-        mapTopPlaylistSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_top_playlist_highquality",
-    {
-      description: "top playlist highquality",
-      annotations: readOnlyAnnotations,
-      inputSchema: {
-        cat: z.string().default("全部"),
-        before: z
-          .union([z.number().int(), z.string()])
-          .optional()
-          ,
-        limit: z.number().int().min(1).max(100).default(20),
-      },
-    },
-    async ({ cat, before, limit }) =>
-      call(
-        "netease_top_playlist_highquality",
-        () => ncm.call("top_playlist_highquality", { cat, before, limit }),
-        mapTopPlaylistSummary,
-      ),
-  );
-
-  server.registerTool(
-    "netease_toplist",
-    {
-      description: "toplist",
-      annotations: readOnlyAnnotations,
-      inputSchema: {},
-    },
-    async () => call("netease_toplist", () => ncm.call("toplist"), mapToplistSummary),
-  );
-
-  server.registerTool(
-    "netease_toplist_detail",
-    {
-      description: "toplist detail",
-      annotations: readOnlyAnnotations,
-      inputSchema: {},
-    },
-    async () =>
-      call("netease_toplist_detail", () => ncm.call("toplist_detail"), mapToplistDetailSummary),
-  );
 };

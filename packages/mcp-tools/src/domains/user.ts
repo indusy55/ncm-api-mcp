@@ -30,7 +30,7 @@ export const registerUserTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {
         uid: z.union([z.number(), z.string()]),
-        limit: z.number().int().min(1).max(100).default(30),
+        limit: z.number().int().min(1).max(100).default(10),
         offset: z.number().int().min(0).default(0),
       },
     },
@@ -62,7 +62,7 @@ export const registerUserTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {
         uid: z.union([z.number(), z.string()]),
-        limit: z.number().int().min(1).max(100).default(20),
+        limit: z.number().int().min(1).max(100).default(10),
         lasttime: z
           .union([z.number().int(), z.string()])
           .optional()
@@ -84,7 +84,7 @@ export const registerUserTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {
         uid: z.union([z.number(), z.string()]),
-        limit: z.number().int().min(1).max(100).default(30),
+        limit: z.number().int().min(1).max(100).default(10),
         offset: z.number().int().min(0).default(0),
       },
     },
@@ -103,7 +103,7 @@ export const registerUserTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {
         uid: z.union([z.number(), z.string()]),
-        limit: z.number().int().min(1).max(100).default(30),
+        limit: z.number().int().min(1).max(100).default(10),
         lasttime: z
           .union([z.number().int(), z.string()])
           .optional()
@@ -150,7 +150,7 @@ export const registerUserTools: ToolRegistrar = (server, { ncm, call }) => {
           .enum(["0", "1"])
           .default("0")
           ,
-        limit: z.number().int().min(1).max(100).default(30),
+        limit: z.number().int().min(1).max(100).default(10),
       },
     },
     async ({ uid, type, limit }) =>

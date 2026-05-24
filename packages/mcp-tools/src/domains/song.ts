@@ -146,7 +146,7 @@ export const registerSongTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {
         id: z.union([z.number(), z.string()]),
-        limit: z.number().int().min(1).max(100).default(50),
+        limit: z.number().int().min(1).max(100).default(10),
         offset: z.number().int().min(0).default(0),
       },
     },
@@ -351,7 +351,7 @@ export const registerSongTools: ToolRegistrar = (server, { ncm, call }) => {
       description: "song purchased [login]",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        limit: z.number().int().min(1).max(100).default(20),
+        limit: z.number().int().min(1).max(100).default(10),
         offset: z.number().int().min(0).default(0),
       },
     },
@@ -365,7 +365,7 @@ export const registerSongTools: ToolRegistrar = (server, { ncm, call }) => {
       description: "song downlist [login]",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        limit: z.number().int().min(1).max(100).default(20),
+        limit: z.number().int().min(1).max(100).default(10),
         offset: z.number().int().min(0).default(0),
       },
     },
@@ -379,7 +379,7 @@ export const registerSongTools: ToolRegistrar = (server, { ncm, call }) => {
       description: "song monthdownlist [login]",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        limit: z.number().int().min(1).max(100).default(20),
+        limit: z.number().int().min(1).max(100).default(10),
         offset: z.number().int().min(0).default(0),
       },
     },
@@ -393,7 +393,7 @@ export const registerSongTools: ToolRegistrar = (server, { ncm, call }) => {
       description: "song singledownlist [login]",
       annotations: readOnlyAnnotations,
       inputSchema: {
-        limit: z.number().int().min(1).max(100).default(20),
+        limit: z.number().int().min(1).max(100).default(10),
         offset: z.number().int().min(0).default(0),
       },
     },
