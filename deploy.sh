@@ -3,14 +3,14 @@ set -euo pipefail
 
 APP_NAME="ncmapi"
 
-cd "$(dirname "$0")/.."
-PROJECT_ROOT=$(pwd)
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+PROJECT_ROOT="$SCRIPT_DIR"
+cd "$PROJECT_ROOT"
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 LOG_FILE="${PROJECT_ROOT}/data/deploy_${TIMESTAMP}.log"
 COMPOSE_FILE="${PROJECT_ROOT}/docker-compose.yml"
 SKIP_BUILD=false
-DEPLOY_TAG=""
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -34,9 +34,18 @@ trap cleanup EXIT
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --skip-build) SKIP_BUILD=true; shift ;;
-        --tag)        DEPLOY_TAG="$2"; shift 2 ;;
         --help|-h)
-            sed -n '3,10p' "$0"
+            cat <<'EOF'
+用法: ./deploy.sh [--skip-build]
+
+说明:
+  1. 拉取当前分支最新代码
+  2. docker compose build
+  3. docker compose up -d
+
+选项:
+  --skip-build   跳过镜像构建，直接执行 docker compose up -d
+EOF
             exit 0
             ;;
         *)
@@ -70,17 +79,10 @@ check_prerequisites() {
 }
 
 fetch_code() {
-    if [ -n "$DEPLOY_TAG" ]; then
-        log_info "切换到指定 tag: ${DEPLOY_TAG}"
-        git fetch --tags
-        git checkout "$DEPLOY_TAG"
-    else
-        log_info "拉取最新代码..."
-        git fetch origin
-        local branch
-        branch=$(git rev-parse --abbrev-ref HEAD)
-        git pull origin "$branch"
-    fi
+    log_info "拉取最新代码..."
+    local branch
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    git pull --ff-only origin "$branch"
     log_ok "代码更新完成，当前 commit: $(git rev-parse --short HEAD)"
 }
 
@@ -90,14 +92,6 @@ build_images() {
         return
     fi
 
-    log_info "标记当前镜像为 prev（用于回滚）..."
-    $COMPOSE_CMD images --format '{{.Repository}}:{{.Tag}}' | sort -u | while read -r img; do
-        if [ -n "$img" ] && [ "$img" != "<none>:<none>" ]; then
-            docker tag "$img" "${img%:*}:prev" 2>/dev/null || true
-        fi
-    done
-    log_ok "旧镜像已标记"
-
     log_info "构建 Docker 镜像..."
     $COMPOSE_CMD build --pull
     log_ok "镜像构建完成"
@@ -106,14 +100,8 @@ build_images() {
 deploy_services() {
     log_info "开始部署服务..."
 
-    $COMPOSE_CMD up -d --remove-orphans --no-deps 2>&1 | tee -a "$LOG_FILE"
+    $COMPOSE_CMD up -d --remove-orphans 2>&1 | tee -a "$LOG_FILE"
     log_ok "容器已启动"
-}
-
-cleanup_images() {
-    log_info "清理旧 Docker 镜像..."
-    docker image prune -f --filter "until=24h" 2>&1 | tee -a "$LOG_FILE"
-    log_ok "旧镜像清理完成"
 }
 
 print_summary() {
@@ -145,7 +133,6 @@ main() {
     fetch_code
     build_images
     deploy_services
-    cleanup_images
     print_summary
 }
 
