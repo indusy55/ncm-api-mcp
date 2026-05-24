@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import type Redis from "ioredis";
 import type { DbClient } from "@ncm/database";
 import type { Env } from "../config.js";
 import { jwtAuth } from "../middleware/auth.js";
@@ -9,11 +10,11 @@ import { createApiKeyRoutes } from "./api-keys.js";
 import { createAdminRoutes } from "./admin.js";
 import { createToolRoutes } from "./tools.js";
 
-export function createRoutes(db: DbClient, env: Env) {
+export function createRoutes(db: DbClient, env: Env, redis: Redis) {
   const router = new Hono();
 
   // Public auth routes
-  router.route("/auth", createAuthRoutes(db, env));
+  router.route("/auth", createAuthRoutes(db, env, redis));
 
   // Protected routes
   router.use("/*", jwtAuth(env.JWT_SECRET));

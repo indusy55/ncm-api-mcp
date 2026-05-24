@@ -1,38 +1,52 @@
-import { jwt } from "hono/jwt";
+import { createMiddleware } from "hono/factory";
 import type { Context } from "hono";
 import { eq } from "drizzle-orm";
 import type { DbClient } from "@ncm/database";
 import { users } from "@ncm/database/schema";
+import { verifyAccessToken, type AccessTokenPayload } from "@ncm/auth";
 import { AppError } from "./error.js";
 
-export function jwtAuth(secret: string) {
-  return jwt({ secret, alg: "HS256" });
+declare module "hono" {
+  interface ContextVariableMap {
+    jwtPayload: AccessTokenPayload;
+  }
 }
 
-function getJwtPayload(c: Context): Record<string, unknown> {
+export function jwtAuth(secret: string) {
+  return createMiddleware(async (c, next) => {
+    const authHeader = c.req.header("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return c.json({ error: "Missing or invalid Authorization header" }, 401);
+    }
+
+    const token = authHeader.slice(7);
+
+    try {
+      const payload = await verifyAccessToken(token, secret);
+      c.set("jwtPayload", payload);
+      await next();
+    } catch {
+      return c.json({ error: "Invalid or expired access token" }, 401);
+    }
+  });
+}
+
+function getJwtPayload(c: Context): AccessTokenPayload {
   const payload = c.get("jwtPayload");
   if (!payload || typeof payload !== "object") {
     throw new AppError(401, "Not authenticated");
   }
-  return payload as Record<string, unknown>;
+  return payload;
 }
 
 export function getUserId(c: Context): string {
   const payload = getJwtPayload(c);
-  const sub = payload.sub;
-  if (typeof sub !== "string") {
-    throw new AppError(401, "Invalid token payload");
-  }
-  return sub;
+  return payload.sub;
 }
 
 export function getUserEmail(c: Context): string {
   const payload = getJwtPayload(c);
-  const email = payload.email;
-  if (typeof email !== "string") {
-    throw new AppError(401, "Invalid token payload");
-  }
-  return email;
+  return payload.email;
 }
 
 export function requireAdmin(db: DbClient) {

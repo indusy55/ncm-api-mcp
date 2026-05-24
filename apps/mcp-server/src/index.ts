@@ -3,7 +3,7 @@ import { createMcpApp } from "./app.js";
 import { getEnv } from "./config.js";
 
 const env = getEnv();
-const app = createMcpApp();
+const app = await createMcpApp();
 
 serve(
   {

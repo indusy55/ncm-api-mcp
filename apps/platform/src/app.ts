@@ -11,6 +11,7 @@ import type { Env } from "./config.js";
 import { errorHandler } from "./middleware/error.js";
 import { createRoutes } from "./routes/index.js";
 import { hashPassword } from "@ncm/auth";
+import { createRedisClient } from "./redis.js";
 import { setSettingIfMissing } from "./services/settings-service.js";
 import { cleanupExpiredRefreshTokens } from "./services/auth-service.js";
 
@@ -50,10 +51,14 @@ async function seedInitialAdmin(db: ReturnType<typeof createDbClient>, env: Env)
 export async function createApp() {
   const env = getEnv();
   const db = createDbClient(env.DATABASE_URL);
+  const redis = createRedisClient(env.REDIS_URL);
 
   await migrate(db, { migrationsFolder });
   await seedInitialAdmin(db, env);
   await cleanupExpiredRefreshTokens(db);
+  await redis.connect().catch((err) => {
+    console.error("[Redis] Platform connect failed, continuing with best-effort rate limiting:", err);
+  });
 
   await setSettingIfMissing(db, "allow_registration", "false").catch((err) => {
     console.error("[Seed] Failed to set default settings:", err);
@@ -86,7 +91,7 @@ export async function createApp() {
 
   app.get("/health", (c) => c.json({ status: "ok", service: "ncm-platform" }));
 
-  app.route("/api", createRoutes(db, env));
+  app.route("/api", createRoutes(db, env, redis));
 
   return app;
 }

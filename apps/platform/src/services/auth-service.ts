@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { eq, lt } from "drizzle-orm";
 import type { DbClient } from "@ncm/database";
-import { users, refreshTokens } from "@ncm/database/schema";
+import { users, refreshTokens, settings } from "@ncm/database/schema";
 import {
   hashPassword,
   verifyPassword,
@@ -24,62 +24,85 @@ export async function registerUser(
   env: Env,
   input: { email: string; password: string; username: string },
 ): Promise<AuthResult> {
-  const existingAdmin = await db
-    .select()
-    .from(users)
-    .where(eq(users.role, "admin"))
-    .get();
-  const role = existingAdmin ? "user" : "admin";
-
-  const allowRegistration = await getSetting(db, "allow_registration");
-  if (role !== "admin" && allowRegistration !== "true") {
-    throw new AppError(403, "Registration is disabled");
-  }
-
-  const existingEmail = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, input.email))
-    .get();
-
-  if (existingEmail) {
-    throw new AppError(409, "Email already registered");
-  }
-
-  const existingUsername = await db
-    .select()
-    .from(users)
-    .where(eq(users.username, input.username))
-    .get();
-
-  if (existingUsername) {
-    throw new AppError(409, "Username already taken");
-  }
-
   const passwordHash = await hashPassword(input.password);
+  const createUser = () => db.transaction((tx) => {
+    const existingAdmin = tx
+      .select()
+      .from(users)
+      .where(eq(users.role, "admin"))
+      .get();
+    const role = existingAdmin ? "user" : "admin";
 
-  await db.insert(users).values({
-    email: input.email,
-    passwordHash,
-    username: input.username,
-    role,
+    const allowRegistration = tx
+      .select({ value: settings.value })
+      .from(settings)
+      .where(eq(settings.key, "allow_registration"))
+      .get()?.value ?? null;
+
+    if (role !== "admin" && allowRegistration !== "true") {
+      throw new AppError(403, "Registration is disabled");
+    }
+
+    const existingEmail = tx
+      .select()
+      .from(users)
+      .where(eq(users.email, input.email))
+      .get();
+
+    if (existingEmail) {
+      throw new AppError(409, "Email already registered");
+    }
+
+    const existingUsername = tx
+      .select()
+      .from(users)
+      .where(eq(users.username, input.username))
+      .get();
+
+    if (existingUsername) {
+      throw new AppError(409, "Username already taken");
+    }
+
+    tx.insert(users).values({
+      email: input.email,
+      passwordHash,
+      username: input.username,
+      role,
+    }).run();
+
+    const createdUser = tx
+      .select()
+      .from(users)
+      .where(eq(users.email, input.email))
+      .get();
+
+    if (!createdUser) {
+      throw new AppError(500, "Failed to create user");
+    }
+
+    return createdUser;
   });
+  let user;
 
-  const user = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, input.email))
-    .get()!;
+  try {
+    user = createUser();
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("UNIQUE constraint failed: users.role")) {
+      user = createUser();
+    } else {
+      throw err;
+    }
+  }
 
   const accessToken = await signAccessToken(
-    user!.id,
-    user!.email,
+    user.id,
+    user.email,
     env.JWT_SECRET,
     env.JWT_ACCESS_EXPIRES_IN,
   );
 
   const { token: refreshToken } = await signRefreshToken(
-    user!.id,
+    user.id,
     env.JWT_SECRET,
     env.JWT_REFRESH_EXPIRES_IN,
   );
@@ -88,18 +111,18 @@ export async function registerUser(
     Date.now() + parseDurationMs(env.JWT_REFRESH_EXPIRES_IN),
   );
   await db.insert(refreshTokens).values({
-    userId: user!.id,
+    userId: user.id,
     tokenHash: hashRefreshToken(refreshToken),
     expiresAt,
   });
 
   return {
     user: {
-      id: user!.id,
-      email: user!.email,
-      username: user!.username,
-      avatarUrl: user!.avatarUrl,
-      role: user!.role,
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      avatarUrl: user.avatarUrl,
+      role: user.role,
     },
     accessToken,
     refreshToken,

@@ -1,9 +1,12 @@
 import { describe, it, expect, beforeAll, beforeEach } from "vitest";
+import { Hono } from "hono";
 import { createDbClient, migrationsFolder } from "@ncm/database";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { registerUser, loginUser, refreshTokensAction, logoutUser } from "../auth-service.js";
 import { createApiKey } from "../api-key-service.js";
 import { setSetting } from "../settings-service.js";
+import { jwtAuth } from "../../middleware/auth.js";
+import { signAccessToken, signRefreshToken } from "@ncm/auth";
 import type { Env } from "../../config.js";
 
 const testEnv: Env = {
@@ -170,5 +173,39 @@ describe("api-key-service", () => {
     expect(key.name).toBe("Test Key");
     expect(key.fullKey).toMatch(/^ncm_/);
     expect(key.id).toBeTruthy();
+  });
+});
+
+describe("jwtAuth", () => {
+  it("should accept access tokens and reject refresh tokens", async () => {
+    const app = new Hono();
+    app.use("/protected", jwtAuth(testEnv.JWT_SECRET));
+    app.get("/protected", (c) => c.json({ ok: true }));
+
+    const accessToken = await signAccessToken(
+      "user-1",
+      "user@example.com",
+      testEnv.JWT_SECRET,
+      testEnv.JWT_ACCESS_EXPIRES_IN,
+    );
+    const refreshToken = (await signRefreshToken(
+      "user-1",
+      testEnv.JWT_SECRET,
+      testEnv.JWT_REFRESH_EXPIRES_IN,
+    )).token;
+
+    const accessResponse = await app.request("/protected", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    expect(accessResponse.status).toBe(200);
+
+    const refreshResponse = await app.request("/protected", {
+      headers: {
+        Authorization: `Bearer ${refreshToken}`,
+      },
+    });
+    expect(refreshResponse.status).toBe(401);
   });
 });
