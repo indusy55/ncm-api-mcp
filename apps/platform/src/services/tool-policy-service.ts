@@ -1,8 +1,7 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type { DbClient } from "@ncm/database";
 import { settings, toolPreferences } from "@ncm/database/schema";
 import { allToolDefinitions, toolDefinitionMap, type ToolAudience } from "@ncm/mcp-tools";
-import { getAllowedToolNamesForGuest, getAllowedToolNamesForUser } from "@ncm/mcp-tools/policy";
 import { AppError } from "../middleware/error.js";
 
 const ADMIN_POLICY_KEY = "tool_admin_policy";

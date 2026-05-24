@@ -11,6 +11,7 @@ import { registerSongTools } from "./domains/song.js";
 import { registerUserTools } from "./domains/user.js";
 import { registerVideoTools } from "./domains/video.js";
 export { allToolDefinitions, getToolDefinition, toolDefinitionMap } from "./catalog.js";
+export type { ToolAudience, ToolDefinition } from "./catalog.js";
 
 export function registerAllTools(
   server: McpServer,

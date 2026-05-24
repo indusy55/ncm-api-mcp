@@ -7,14 +7,37 @@ import type { Env } from "../config.js";
 
 const ncm = createNcmClient("");
 
+interface LoginQrKeyData {
+  unikey?: string;
+}
+
+interface LoginQrCreateData {
+  qrimg?: string;
+}
+
+interface UserProfileLike {
+  userId?: number;
+  id?: number;
+  nickname?: string;
+  avatarUrl?: string | null;
+}
+
 export async function createQrKey(): Promise<string> {
   const res = await ncm.loginQrKey();
-  return res.body.data.unikey;
+  const data = res.body.data as LoginQrKeyData | undefined;
+  if (!data?.unikey) {
+    throw new Error("Missing qr key");
+  }
+  return data.unikey;
 }
 
 export async function createQrImage(key: string): Promise<string> {
   const res = await ncm.loginQrCreate(key, true);
-  return res.body.data.qrimg;
+  const data = res.body.data as LoginQrCreateData | undefined;
+  if (!data?.qrimg) {
+    throw new Error("Missing qr image");
+  }
+  return data.qrimg;
 }
 
 export async function checkQrStatus(
@@ -50,7 +73,8 @@ export async function checkQrStatus(
 
       // Get user info
       const userInfo = await ncm.userAccount(cookieString);
-      const profile = userInfo.body?.profile || userInfo.body?.account || {};
+      const body = userInfo.body as { profile?: UserProfileLike; account?: UserProfileLike } | undefined;
+      const profile = body?.profile ?? body?.account ?? {};
       const neteaseUid = profile.userId || profile.id;
       if (!neteaseUid) {
         console.error("user_account: missing uid", JSON.stringify(userInfo.body).slice(0, 200));
