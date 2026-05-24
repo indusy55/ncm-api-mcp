@@ -14,6 +14,8 @@ import SupervisedUserCircleIcon from "@mui/icons-material/SupervisedUserCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
 import BuildIcon from "@mui/icons-material/Build";
 import TuneIcon from "@mui/icons-material/Tune";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.js";
 import { useNeteaseAccount } from "../hooks/useNeteaseAccount.js";
@@ -21,10 +23,15 @@ import { useMediaQuery, useTheme } from "@mui/material";
 
 const DRAWER_WIDTH = 200;
 
-function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+function Sidebar({
+  mode,
+  onNavigate,
+}: {
+  mode: "user" | "admin";
+  onNavigate?: () => void;
+}) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
 
   const menuItems = [
     { key: "/", label: "控制台", icon: <DashboardIcon /> },
@@ -40,13 +47,15 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     { key: "/admin/tools", label: "工具策略", icon: <TuneIcon /> },
   ];
 
+  const visibleItems = mode === "admin" ? adminItems : menuItems;
+
   return (
     <Box>
       <Box sx={{ height: 64, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 18 }}>
         NCM MCP
       </Box>
       <List>
-        {menuItems.map((item) => (
+        {visibleItems.map((item) => (
           <ListItem key={item.key} disablePadding>
             <ListItemButton
               selected={location.pathname === item.key}
@@ -63,39 +72,15 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           </ListItem>
         ))}
       </List>
-      {user?.role === "admin" && (
-        <>
-          <Box sx={{ px: 2, py: 0.5 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>管理</Typography>
-          </Box>
-          <List>
-            {adminItems.map((item) => (
-              <ListItem key={item.key} disablePadding>
-                <ListItemButton
-                  selected={location.pathname === item.key}
-                  onClick={() => {
-                    navigate(item.key);
-                    onNavigate?.();
-                  }}
-                >
-                  <ListItemIcon sx={{ minWidth: 40 }}>
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText primary={item.label} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </>
-      )}
     </Box>
   );
 }
 
-export default function AppLayout() {
+export default function AppLayout({ mode }: { mode: "user" | "admin" }) {
   const { user, loading, logout } = useAuth();
   const { status } = useNeteaseAccount();
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -114,6 +99,19 @@ export default function AppLayout() {
     return null;
   }
 
+  const isAdmin = user.role === "admin";
+  const isAdminRoute = location.pathname.startsWith("/admin/");
+
+  if (mode === "admin" && !isAdmin) {
+    navigate("/");
+    return null;
+  }
+
+  const toggleAdminView = () => {
+    navigate(mode === "admin" ? "/" : "/admin/tools");
+    setMobileOpen(false);
+  };
+
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
       {/* Mobile drawer */}
@@ -128,7 +126,7 @@ export default function AppLayout() {
             "& .MuiDrawer-paper": { width: DRAWER_WIDTH },
           }}
         >
-          <Sidebar onNavigate={() => setMobileOpen(false)} />
+          <Sidebar mode={mode} onNavigate={() => setMobileOpen(false)} />
         </Drawer>
       )}
 
@@ -142,7 +140,7 @@ export default function AppLayout() {
             "& .MuiDrawer-paper": { width: DRAWER_WIDTH },
           }}
         >
-          <Sidebar />
+          <Sidebar mode={mode} />
         </Drawer>
       )}
 
@@ -157,6 +155,16 @@ export default function AppLayout() {
               >
                 <MenuIcon />
               </IconButton>
+            )}
+            {isAdmin && (
+              <Button
+                variant="text"
+                startIcon={mode === "admin" ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                onClick={toggleAdminView}
+                sx={{ ml: isMobile ? 0 : 1 }}
+              >
+                {mode === "admin" ? "退出管理员视图" : "进入管理员视图"}
+              </Button>
             )}
             <Box sx={{ flexGrow: 1 }} />
             <Typography sx={{ mr: 2 }}>{user.username}</Typography>

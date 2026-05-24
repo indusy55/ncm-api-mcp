@@ -24,13 +24,15 @@ export default function App() {
           <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route element={<AppLayout />}>
+          <Route element={<AppLayout mode="user" />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/account/bind" element={<AccountBinding />} />
             <Route path="/account/keys" element={<ApiKeys />} />
             <Route path="/mcp-setup" element={<McpSetup />} />
             <Route path="/account/profile" element={<Profile />} />
             <Route path="/tools" element={<ToolManagement />} />
+          </Route>
+          <Route element={<AppLayout mode="admin" />}>
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/tools" element={<AdminTools />} />
           </Route>
