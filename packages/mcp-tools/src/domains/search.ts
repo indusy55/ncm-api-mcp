@@ -1,6 +1,15 @@
 import { z } from "zod";
 import type { ToolRegistrar } from "../shared/context.js";
 import { readOnlyAnnotations } from "../shared/context.js";
+import {
+  mapPersonalizedMvSummary,
+  mapPersonalizedPlaylistSummary,
+  mapRecommendSongsSummary,
+  mapSearchDefaultSummary,
+  mapSearchHotSummary,
+  mapSearchSuggestSummary,
+  mapSearchSummary,
+} from "../mappers/summary.js";
 
 export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
@@ -19,7 +28,11 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ keywords, type, limit, offset }) =>
-      call("netease_search", () => ncm.call("cloudsearch", { keywords, type, limit, offset })),
+      call(
+        "netease_search",
+        () => ncm.call("cloudsearch", { keywords, type, limit, offset }),
+        mapSearchSummary,
+      ),
   );
 
   server.registerTool(
@@ -38,7 +51,11 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ keywords, type, limit, offset }) =>
-      call("netease_search_legacy", () => ncm.call("search", { keywords, type, limit, offset })),
+      call(
+        "netease_search_legacy",
+        () => ncm.call("search", { keywords, type, limit, offset }),
+        mapSearchSummary,
+      ),
   );
 
   server.registerTool(
@@ -52,7 +69,11 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ keywords, type }) =>
-      call("netease_search_suggest", () => ncm.call("search_suggest", { keywords, type })),
+      call(
+        "netease_search_suggest",
+        () => ncm.call("search_suggest", { keywords, type }),
+        mapSearchSuggestSummary,
+      ),
   );
 
   server.registerTool(
@@ -66,7 +87,11 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ keywords, type }) =>
-      call("netease_search_multimatch", () => ncm.call("search_multimatch", { keywords, type })),
+      call(
+        "netease_search_multimatch",
+        () => ncm.call("search_multimatch", { keywords, type }),
+        mapSearchSuggestSummary,
+      ),
   );
 
   server.registerTool(
@@ -101,7 +126,11 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ keyword }) =>
-      call("netease_search_suggest_pc", () => ncm.call("search_suggest_pc", { keyword })),
+      call(
+        "netease_search_suggest_pc",
+        () => ncm.call("search_suggest_pc", { keyword }),
+        mapSearchSuggestSummary,
+      ),
   );
 
   server.registerTool(
@@ -111,7 +140,7 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_search_hot", () => ncm.call("search_hot")),
+    async () => call("netease_search_hot", () => ncm.call("search_hot"), mapSearchHotSummary),
   );
 
   server.registerTool(
@@ -121,7 +150,8 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_search_hot_detail", () => ncm.call("search_hot_detail")),
+    async () =>
+      call("netease_search_hot_detail", () => ncm.call("search_hot_detail"), mapSearchHotSummary),
   );
 
   server.registerTool(
@@ -131,7 +161,7 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_search_default", () => ncm.call("search_default")),
+    async () => call("netease_search_default", () => ncm.call("search_default"), mapSearchDefaultSummary),
   );
 
   server.registerTool(
@@ -143,7 +173,12 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
         limit: z.number().int().min(1).max(50).default(30),
       },
     },
-    async ({ limit }) => call("netease_personalized", () => ncm.call("personalized", { limit })),
+    async ({ limit }) =>
+      call(
+        "netease_personalized",
+        () => ncm.call("personalized", { limit }),
+        mapPersonalizedPlaylistSummary,
+      ),
   );
 
   server.registerTool(
@@ -160,8 +195,10 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ area, limit }) =>
-      call("netease_personalized_newsong", () =>
-        ncm.call("personalized_newsong", { area, limit }),
+      call(
+        "netease_personalized_newsong",
+        () => ncm.call("personalized_newsong", { area, limit }),
+        mapRecommendSongsSummary,
       ),
   );
 
@@ -172,6 +209,7 @@ export const registerSearchTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_personalized_mv", () => ncm.call("personalized_mv")),
+    async () =>
+      call("netease_personalized_mv", () => ncm.call("personalized_mv"), mapPersonalizedMvSummary),
   );
 };

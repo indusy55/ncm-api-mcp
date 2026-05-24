@@ -1,8 +1,10 @@
 import type { NcmApiResponse } from "@ncm/api-client";
 
+export type SummaryMapper = (body: Record<string, unknown>) => unknown;
+
 export function createTextResult(body: unknown) {
   return {
-    content: [{ type: "text" as const, text: JSON.stringify(body, null, 2) }],
+    content: [{ type: "text" as const, text: JSON.stringify(body) }],
   };
 }
 
@@ -17,6 +19,7 @@ export function handleNcmError(error: unknown) {
 
 export async function safeNcmCall(
   apiCall: () => Promise<NcmApiResponse>,
+  mapper?: SummaryMapper,
 ) {
   try {
     const res = await apiCall();
@@ -26,8 +29,16 @@ export async function safeNcmCall(
         isError: true,
       };
     }
-    return createTextResult(res.body);
+    const body =
+      mapper && isRecord(res.body)
+        ? mapper(res.body)
+        : res.body;
+    return createTextResult(body);
   } catch (e) {
     return handleNcmError(e);
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }

@@ -18,9 +18,13 @@ export function registerAllTools(
 ) {
   const ncm = createNcmClient(cookies);
 
-  const call = <T extends NcmApiResponse>(name: string, fn: () => Promise<T>) => {
+  const call = <T extends NcmApiResponse>(
+    name: string,
+    fn: () => Promise<T>,
+    mapper?: import("./helpers.js").SummaryMapper,
+  ) => {
     onToolCall?.(name);
-    return safeNcmCall(fn);
+    return safeNcmCall(fn, mapper);
   };
 
   const deps = { ncm, call };

@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { NcmApiResponse, NcmClient } from "@ncm/api-client";
 import { safeNcmCall } from "../helpers.js";
+import type { SummaryMapper } from "../helpers.js";
 
 export const readOnlyAnnotations = {
   readOnlyHint: true,
@@ -21,6 +22,7 @@ export interface ToolDeps {
   call: <T extends NcmApiResponse>(
     name: string,
     fn: () => Promise<T>,
+    mapper?: SummaryMapper,
   ) => ReturnType<typeof safeNcmCall>;
 }
 

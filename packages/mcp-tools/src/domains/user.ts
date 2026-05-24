@@ -1,6 +1,16 @@
 import { z } from "zod";
 import type { ToolRegistrar } from "../shared/context.js";
 import { readOnlyAnnotations } from "../shared/context.js";
+import {
+  mapUserDetailSummary,
+  mapUserEventSummary,
+  mapUserFollowListSummary,
+  mapUserInfoSummary,
+  mapUserLevelSummary,
+  mapUserPlaylistsSummary,
+  mapUserRecordSummary,
+  mapUserSubcountSummary,
+} from "../mappers/summary.js";
 
 export const registerUserTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
@@ -10,7 +20,7 @@ export const registerUserTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_user_info", () => ncm.call("user_account")),
+    async () => call("netease_user_info", () => ncm.call("user_account"), mapUserInfoSummary),
   );
 
   server.registerTool(
@@ -25,7 +35,11 @@ export const registerUserTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ uid, limit, offset }) =>
-      call("netease_user_playlists", () => ncm.call("user_playlist", { uid, limit, offset })),
+      call(
+        "netease_user_playlists",
+        () => ncm.call("user_playlist", { uid, limit, offset }),
+        mapUserPlaylistsSummary,
+      ),
   );
 
   server.registerTool(
@@ -37,7 +51,8 @@ export const registerUserTools: ToolRegistrar = (server, { ncm, call }) => {
         uid: z.union([z.number(), z.string()]).describe("NetEase user UID"),
       },
     },
-    async ({ uid }) => call("netease_user_detail", () => ncm.call("user_detail", { uid })),
+    async ({ uid }) =>
+      call("netease_user_detail", () => ncm.call("user_detail", { uid }), mapUserDetailSummary),
   );
 
   server.registerTool(
@@ -55,7 +70,11 @@ export const registerUserTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ uid, limit, lasttime }) =>
-      call("netease_user_event", () => ncm.call("user_event", { uid, limit, lasttime })),
+      call(
+        "netease_user_event",
+        () => ncm.call("user_event", { uid, limit, lasttime }),
+        mapUserEventSummary,
+      ),
   );
 
   server.registerTool(
@@ -70,7 +89,11 @@ export const registerUserTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ uid, limit, offset }) =>
-      call("netease_user_follows", () => ncm.call("user_follows", { uid, limit, offset })),
+      call(
+        "netease_user_follows",
+        () => ncm.call("user_follows", { uid, limit, offset }),
+        mapUserFollowListSummary,
+      ),
   );
 
   server.registerTool(
@@ -88,7 +111,11 @@ export const registerUserTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ uid, limit, lasttime }) =>
-      call("netease_user_followeds", () => ncm.call("user_followeds", { uid, limit, lasttime })),
+      call(
+        "netease_user_followeds",
+        () => ncm.call("user_followeds", { uid, limit, lasttime }),
+        mapUserFollowListSummary,
+      ),
   );
 
   server.registerTool(
@@ -98,7 +125,7 @@ export const registerUserTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_user_level", () => ncm.call("user_level")),
+    async () => call("netease_user_level", () => ncm.call("user_level"), mapUserLevelSummary),
   );
 
   server.registerTool(
@@ -108,7 +135,8 @@ export const registerUserTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_user_subcount", () => ncm.call("user_subcount")),
+    async () =>
+      call("netease_user_subcount", () => ncm.call("user_subcount"), mapUserSubcountSummary),
   );
 
   server.registerTool(
@@ -126,6 +154,10 @@ export const registerUserTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ uid, type, limit }) =>
-      call("netease_user_record", () => ncm.call("user_record", { uid, type, limit })),
+      call(
+        "netease_user_record",
+        () => ncm.call("user_record", { uid, type, limit }),
+        mapUserRecordSummary,
+      ),
   );
 };

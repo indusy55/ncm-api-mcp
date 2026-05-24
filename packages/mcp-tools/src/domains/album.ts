@@ -4,6 +4,14 @@ import {
   readOnlyAnnotations,
   writeAnnotations,
 } from "../shared/context.js";
+import {
+  mapAlbumDetailDynamicSummary,
+  mapAlbumDetailSummary,
+  mapAlbumListSummary,
+  mapAlbumSublistSummary,
+  mapSongListSummary,
+  mapWriteActionSummary,
+} from "../mappers/summary.js";
 
 export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
@@ -18,7 +26,7 @@ export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
           .describe("Region: 0=all, 7=Chinese, 96=European/American, 16=Korean, 8=Japanese"),
       },
     },
-    async ({ type }) => call("netease_top_song", () => ncm.call("top_song", { type })),
+    async ({ type }) => call("netease_top_song", () => ncm.call("top_song", { type }), mapSongListSummary),
   );
 
   server.registerTool(
@@ -36,8 +44,10 @@ export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ area, type, year, mouth, limit, offset }) =>
-      call("netease_top_album", () =>
-        ncm.call("top_album", { area, type, year, mouth, limit, offset }),
+      call(
+        "netease_top_album",
+        () => ncm.call("top_album", { area, type, year, mouth, limit, offset }),
+        mapAlbumListSummary,
       ),
   );
 
@@ -50,7 +60,8 @@ export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
         id: z.union([z.number(), z.string()]).describe("Album ID"),
       },
     },
-    async ({ id }) => call("netease_album_detail", () => ncm.call("album", { id })),
+    async ({ id }) =>
+      call("netease_album_detail", () => ncm.call("album", { id }), mapAlbumDetailSummary),
   );
 
   server.registerTool(
@@ -63,7 +74,11 @@ export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id }) =>
-      call("netease_album_detail_dynamic", () => ncm.call("album_detail_dynamic", { id })),
+      call(
+        "netease_album_detail_dynamic",
+        () => ncm.call("album_detail_dynamic", { id }),
+        mapAlbumDetailDynamicSummary,
+      ),
   );
 
   server.registerTool(
@@ -78,7 +93,7 @@ export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ area, limit, offset }) =>
-      call("netease_album_new", () => ncm.call("album_new", { area, limit, offset })),
+      call("netease_album_new", () => ncm.call("album_new", { area, limit, offset }), mapAlbumListSummary),
   );
 
   server.registerTool(
@@ -94,7 +109,11 @@ export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ area, type, limit, offset }) =>
-      call("netease_album_list", () => ncm.call("album_list", { area, type, limit, offset })),
+      call(
+        "netease_album_list",
+        () => ncm.call("album_list", { area, type, limit, offset }),
+        mapAlbumListSummary,
+      ),
   );
 
   server.registerTool(
@@ -104,7 +123,7 @@ export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_album_newest", () => ncm.call("album_newest")),
+    async () => call("netease_album_newest", () => ncm.call("album_newest"), mapAlbumListSummary),
   );
 
   server.registerTool(
@@ -119,7 +138,11 @@ export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ area, limit, offset }) =>
-      call("netease_album_list_style", () => ncm.call("album_list_style", { area, limit, offset })),
+      call(
+        "netease_album_list_style",
+        () => ncm.call("album_list_style", { area, limit, offset }),
+        mapAlbumListSummary,
+      ),
   );
 
   server.registerTool(
@@ -168,7 +191,7 @@ export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ limit, offset }) =>
-      call("netease_album_sublist", () => ncm.call("album_sublist", { limit, offset })),
+      call("netease_album_sublist", () => ncm.call("album_sublist", { limit, offset }), mapAlbumSublistSummary),
   );
 
   server.registerTool(
@@ -182,6 +205,6 @@ export const registerAlbumTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, subscribe }) =>
-      call("netease_album_sub", () => ncm.call("album_sub", { id, t: subscribe ? 1 : 0 })),
+      call("netease_album_sub", () => ncm.call("album_sub", { id, t: subscribe ? 1 : 0 }), mapWriteActionSummary),
   );
 };

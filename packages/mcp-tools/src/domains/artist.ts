@@ -4,6 +4,20 @@ import {
   readOnlyAnnotations,
   writeAnnotations,
 } from "../shared/context.js";
+import {
+  mapArtistDetailDynamicSummary,
+  mapArtistFansSummary,
+  mapArtistInfoSummary,
+  mapArtistAlbumsSummary,
+  mapArtistListSummary,
+  mapArtistMvsSummary,
+  mapArtistSongsSummary,
+  mapArtistSublistSummary,
+  mapMvListSummary,
+  mapSongListSummary,
+  mapVideoListSummary,
+  mapWriteActionSummary,
+} from "../mappers/summary.js";
 
 export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
@@ -29,7 +43,7 @@ export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ limit, offset }) =>
-      call("netease_top_artists", () => ncm.call("top_artists", { limit, offset })),
+      call("netease_top_artists", () => ncm.call("top_artists", { limit, offset }), mapArtistListSummary),
   );
 
   server.registerTool(
@@ -41,7 +55,8 @@ export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
         id: z.union([z.number(), z.string()]).describe("Artist ID"),
       },
     },
-    async ({ id }) => call("netease_artist_info", () => ncm.call("artist_detail", { id })),
+    async ({ id }) =>
+      call("netease_artist_info", () => ncm.call("artist_detail", { id }), mapArtistInfoSummary),
   );
 
   server.registerTool(
@@ -56,7 +71,11 @@ export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, limit, offset }) =>
-      call("netease_artist_songs", () => ncm.call("artist_songs", { id, limit, offset })),
+      call(
+        "netease_artist_songs",
+        () => ncm.call("artist_songs", { id, limit, offset }),
+        mapArtistSongsSummary,
+      ),
   );
 
   server.registerTool(
@@ -71,7 +90,11 @@ export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, limit, offset }) =>
-      call("netease_artist_album", () => ncm.call("artist_album", { id, limit, offset })),
+      call(
+        "netease_artist_album",
+        () => ncm.call("artist_album", { id, limit, offset }),
+        mapArtistAlbumsSummary,
+      ),
   );
 
   server.registerTool(
@@ -86,7 +109,7 @@ export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, limit, offset }) =>
-      call("netease_artist_mv", () => ncm.call("artist_mv", { id, limit, offset })),
+      call("netease_artist_mv", () => ncm.call("artist_mv", { id, limit, offset }), mapArtistMvsSummary),
   );
 
   server.registerTool(
@@ -110,7 +133,7 @@ export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
         id: z.union([z.number(), z.string()]).describe("Artist ID"),
       },
     },
-    async ({ id }) => call("netease_simi_artist", () => ncm.call("simi_artist", { id })),
+    async ({ id }) => call("netease_simi_artist", () => ncm.call("simi_artist", { id }), mapArtistListSummary),
   );
 
   server.registerTool(
@@ -123,7 +146,11 @@ export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id }) =>
-      call("netease_artist_detail_dynamic", () => ncm.call("artist_detail_dynamic", { id })),
+      call(
+        "netease_artist_detail_dynamic",
+        () => ncm.call("artist_detail_dynamic", { id }),
+        mapArtistDetailDynamicSummary,
+      ),
   );
 
   server.registerTool(
@@ -138,7 +165,11 @@ export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, limit, offset }) =>
-      call("netease_artist_fans", () => ncm.call("artist_fans", { id, limit, offset })),
+      call(
+        "netease_artist_fans",
+        () => ncm.call("artist_fans", { id, limit, offset }),
+        mapArtistFansSummary,
+      ),
   );
 
   server.registerTool(
@@ -165,7 +196,11 @@ export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ limit, offset }) =>
-      call("netease_artist_sublist", () => ncm.call("artist_sublist", { limit, offset })),
+      call(
+        "netease_artist_sublist",
+        () => ncm.call("artist_sublist", { limit, offset }),
+        mapArtistSublistSummary,
+      ),
   );
 
   server.registerTool(
@@ -179,7 +214,11 @@ export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, subscribe }) =>
-      call("netease_artist_sub", () => ncm.call("artist_sub", { id, t: subscribe ? 1 : 0 })),
+      call(
+        "netease_artist_sub",
+        () => ncm.call("artist_sub", { id, t: subscribe ? 1 : 0 }),
+        mapWriteActionSummary,
+      ),
   );
 
   server.registerTool(
@@ -201,8 +240,10 @@ export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ area, initial, type, limit, offset }) =>
-      call("netease_artist_list", () =>
-        ncm.call("artist_list", { area, initial, type, limit, offset }),
+      call(
+        "netease_artist_list",
+        () => ncm.call("artist_list", { area, initial, type, limit, offset }),
+        mapArtistListSummary,
       ),
   );
 
@@ -215,7 +256,8 @@ export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
         id: z.union([z.number(), z.string()]).describe("Artist ID"),
       },
     },
-    async ({ id }) => call("netease_artist_top_song", () => ncm.call("artist_top_song", { id })),
+    async ({ id }) =>
+      call("netease_artist_top_song", () => ncm.call("artist_top_song", { id }), mapSongListSummary),
   );
 
   server.registerTool(
@@ -235,7 +277,11 @@ export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ limit, startTimestamp }) =>
-      call("netease_artist_new_song", () => ncm.call("artist_new_song", { limit, startTimestamp })),
+      call(
+        "netease_artist_new_song",
+        () => ncm.call("artist_new_song", { limit, startTimestamp }),
+        mapSongListSummary,
+      ),
   );
 
   server.registerTool(
@@ -255,7 +301,11 @@ export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ limit, startTimestamp }) =>
-      call("netease_artist_new_mv", () => ncm.call("artist_new_mv", { limit, startTimestamp })),
+      call(
+        "netease_artist_new_mv",
+        () => ncm.call("artist_new_mv", { limit, startTimestamp }),
+        mapMvListSummary,
+      ),
   );
 
   server.registerTool(
@@ -280,6 +330,10 @@ export const registerArtistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, size, cursor, order }) =>
-      call("netease_artist_video", () => ncm.call("artist_video", { id, size, cursor, order })),
+      call(
+        "netease_artist_video",
+        () => ncm.call("artist_video", { id, size, cursor, order }),
+        mapVideoListSummary,
+      ),
   );
 };

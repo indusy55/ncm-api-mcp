@@ -1,6 +1,15 @@
 import { z } from "zod";
 import type { ToolRegistrar } from "../shared/context.js";
 import { readOnlyAnnotations } from "../shared/context.js";
+import {
+  mapBannerSummary,
+  mapMvDetailInfoSummary,
+  mapMvDetailSummary,
+  mapMvListSummary,
+  mapVideoDetailInfoSummary,
+  mapVideoDetailSummary,
+  mapVideoListSummary,
+} from "../mappers/summary.js";
 
 export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
@@ -15,7 +24,7 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ area, limit, offset }) =>
-      call("netease_top_mv", () => ncm.call("top_mv", { area, limit, offset })),
+      call("netease_top_mv", () => ncm.call("top_mv", { area, limit, offset }), mapMvListSummary),
   );
 
   server.registerTool(
@@ -32,7 +41,7 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ area, type, order, limit, offset }) =>
-      call("netease_mv_all", () => ncm.call("mv_all", { area, type, order, limit, offset })),
+      call("netease_mv_all", () => ncm.call("mv_all", { area, type, order, limit, offset }), mapMvListSummary),
   );
 
   server.registerTool(
@@ -44,7 +53,8 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
         mvid: z.union([z.number(), z.string()]).describe("MV ID"),
       },
     },
-    async ({ mvid }) => call("netease_mv_detail", () => ncm.call("mv_detail", { mvid })),
+    async ({ mvid }) =>
+      call("netease_mv_detail", () => ncm.call("mv_detail", { mvid }), mapMvDetailSummary),
   );
 
   server.registerTool(
@@ -56,7 +66,12 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
         mvid: z.union([z.number(), z.string()]).describe("MV ID"),
       },
     },
-    async ({ mvid }) => call("netease_mv_detail_info", () => ncm.call("mv_detail_info", { mvid })),
+    async ({ mvid }) =>
+      call(
+        "netease_mv_detail_info",
+        () => ncm.call("mv_detail_info", { mvid }),
+        mapMvDetailInfoSummary,
+      ),
   );
 
   server.registerTool(
@@ -72,7 +87,8 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
           .describe("Result limit"),
       },
     },
-    async ({ area, limit }) => call("netease_mv_first", () => ncm.call("mv_first", { area, limit })),
+    async ({ area, limit }) =>
+      call("netease_mv_first", () => ncm.call("mv_first", { area, limit }), mapMvListSummary),
   );
 
   server.registerTool(
@@ -86,7 +102,7 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ limit, offset }) =>
-      call("netease_mv_exclusive_rcmd", () => ncm.call("mv_exclusive_rcmd", { limit, offset })),
+      call("netease_mv_exclusive_rcmd", () => ncm.call("mv_exclusive_rcmd", { limit, offset }), mapMvListSummary),
   );
 
   server.registerTool(
@@ -114,7 +130,8 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
         id: z.union([z.number(), z.string()]).describe("Video or related resource ID"),
       },
     },
-    async ({ id }) => call("netease_related_allvideo", () => ncm.call("related_allvideo", { id })),
+    async ({ id }) =>
+      call("netease_related_allvideo", () => ncm.call("related_allvideo", { id }), mapVideoListSummary),
   );
 
   server.registerTool(
@@ -124,7 +141,7 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_banner", () => ncm.call("banner")),
+    async () => call("netease_banner", () => ncm.call("banner"), mapBannerSummary),
   );
 
   server.registerTool(
@@ -136,7 +153,8 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
         id: z.string().min(1).describe("Video ID"),
       },
     },
-    async ({ id }) => call("netease_video_detail", () => ncm.call("video_detail", { id })),
+    async ({ id }) =>
+      call("netease_video_detail", () => ncm.call("video_detail", { id }), mapVideoDetailSummary),
   );
 
   server.registerTool(
@@ -148,7 +166,12 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
         vid: z.string().min(1).describe("Video ID"),
       },
     },
-    async ({ vid }) => call("netease_video_detail_info", () => ncm.call("video_detail_info", { vid })),
+    async ({ vid }) =>
+      call(
+        "netease_video_detail_info",
+        () => ncm.call("video_detail_info", { vid }),
+        mapVideoDetailInfoSummary,
+      ),
   );
 
   server.registerTool(
@@ -174,7 +197,7 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ limit, offset }) =>
-      call("netease_video_category_list", () => ncm.call("video_category_list", { limit, offset })),
+      call("netease_video_category_list", () => ncm.call("video_category_list", { limit, offset }), mapVideoListSummary),
   );
 
   server.registerTool(
@@ -184,7 +207,7 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_video_group_list", () => ncm.call("video_group_list")),
+    async () => call("netease_video_group_list", () => ncm.call("video_group_list"), mapVideoListSummary),
   );
 
   server.registerTool(
@@ -200,7 +223,7 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
           .describe("Optional pagination offset"),
       },
     },
-    async ({ id, offset }) => call("netease_video_group", () => ncm.call("video_group", { id, offset })),
+    async ({ id, offset }) => call("netease_video_group", () => ncm.call("video_group", { id, offset }), mapVideoListSummary),
   );
 
   server.registerTool(
@@ -216,7 +239,7 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ offset }) =>
-      call("netease_video_timeline_all", () => ncm.call("video_timeline_all", { offset })),
+      call("netease_video_timeline_all", () => ncm.call("video_timeline_all", { offset }), mapVideoListSummary),
   );
 
   server.registerTool(
@@ -232,8 +255,10 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ offset }) =>
-      call("netease_video_timeline_recommend", () =>
-        ncm.call("video_timeline_recommend", { offset }),
+      call(
+        "netease_video_timeline_recommend",
+        () => ncm.call("video_timeline_recommend", { offset }),
+        mapVideoListSummary,
       ),
   );
 
@@ -244,6 +269,7 @@ export const registerVideoTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_playlist_video_recent", () => ncm.call("playlist_video_recent")),
+    async () =>
+      call("netease_playlist_video_recent", () => ncm.call("playlist_video_recent"), mapVideoListSummary),
   );
 };

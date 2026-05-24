@@ -4,6 +4,20 @@ import {
   readOnlyAnnotations,
   writeAnnotations,
 } from "../shared/context.js";
+import {
+  mapPlaylistCategorySummary,
+  mapPlaylistDetailSummary,
+  mapPlaylistDynamicSummary,
+  mapPlaylistListSummary,
+  mapPlaylistMyLikeSummary,
+  mapPlaylistSubscribersSummary,
+  mapPlaylistTagSummary,
+  mapPlaylistTrackAllSummary,
+  mapTopPlaylistSummary,
+  mapToplistSummary,
+  mapToplistDetailSummary,
+  mapWriteActionSummary,
+} from "../mappers/summary.js";
 
 export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
@@ -21,7 +35,11 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, s }) =>
-      call("netease_playlist_detail", () => ncm.call("playlist_detail", { id, s })),
+      call(
+        "netease_playlist_detail",
+        () => ncm.call("playlist_detail", { id, s }),
+        mapPlaylistDetailSummary,
+      ),
   );
 
   server.registerTool(
@@ -38,7 +56,11 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, s }) =>
-      call("netease_playlist_detail_dynamic", () => ncm.call("playlist_detail_dynamic", { id, s })),
+      call(
+        "netease_playlist_detail_dynamic",
+        () => ncm.call("playlist_detail_dynamic", { id, s }),
+        mapPlaylistDynamicSummary,
+      ),
   );
 
   server.registerTool(
@@ -51,7 +73,11 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id }) =>
-      call("netease_playlist_detail_rcmd_get", () => ncm.call("playlist_detail_rcmd_get", { id })),
+      call(
+        "netease_playlist_detail_rcmd_get",
+        () => ncm.call("playlist_detail_rcmd_get", { id }),
+        mapPlaylistListSummary,
+      ),
   );
 
   server.registerTool(
@@ -70,8 +96,10 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, s, limit, offset }) =>
-      call("netease_playlist_track_all", () =>
-        ncm.call("playlist_track_all", { id, s, limit, offset }),
+      call(
+        "netease_playlist_track_all",
+        () => ncm.call("playlist_track_all", { id, s, limit, offset }),
+        mapPlaylistTrackAllSummary,
       ),
   );
 
@@ -82,7 +110,7 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_playlist_catlist", () => ncm.call("playlist_catlist")),
+    async () => call("netease_playlist_catlist", () => ncm.call("playlist_catlist"), mapPlaylistCategorySummary),
   );
 
   server.registerTool(
@@ -93,7 +121,7 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       inputSchema: {},
     },
     async () =>
-      call("netease_playlist_category_list", () => ncm.call("playlist_category_list")),
+      call("netease_playlist_category_list", () => ncm.call("playlist_category_list"), mapPlaylistCategorySummary),
   );
 
   server.registerTool(
@@ -103,7 +131,7 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_playlist_hot", () => ncm.call("playlist_hot")),
+    async () => call("netease_playlist_hot", () => ncm.call("playlist_hot"), mapPlaylistTagSummary),
   );
 
   server.registerTool(
@@ -114,7 +142,7 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       inputSchema: {},
     },
     async () =>
-      call("netease_playlist_highquality_tags", () => ncm.call("playlist_highquality_tags")),
+      call("netease_playlist_highquality_tags", () => ncm.call("playlist_highquality_tags"), mapPlaylistTagSummary),
   );
 
   server.registerTool(
@@ -129,8 +157,10 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, limit, offset }) =>
-      call("netease_playlist_subscribers", () =>
-        ncm.call("playlist_subscribers", { id, limit, offset }),
+      call(
+        "netease_playlist_subscribers",
+        () => ncm.call("playlist_subscribers", { id, limit, offset }),
+        mapPlaylistSubscribersSummary,
       ),
   );
 
@@ -146,7 +176,11 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, limit, offset }) =>
-      call("netease_simi_playlist", () => ncm.call("simi_playlist", { id, limit, offset })),
+      call(
+        "netease_simi_playlist",
+        () => ncm.call("simi_playlist", { id, limit, offset }),
+        mapPlaylistListSummary,
+      ),
   );
 
   server.registerTool(
@@ -167,7 +201,11 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ name, privacy, type }) =>
-      call("netease_playlist_create", () => ncm.call("playlist_create", { name, privacy, type })),
+      call(
+        "netease_playlist_create",
+        () => ncm.call("playlist_create", { name, privacy, type }),
+        mapWriteActionSummary,
+      ),
   );
 
   server.registerTool(
@@ -179,7 +217,8 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
         id: z.union([z.number(), z.string()]).describe("Playlist ID"),
       },
     },
-    async ({ id }) => call("netease_playlist_delete", () => ncm.call("playlist_delete", { id })),
+    async ({ id }) =>
+      call("netease_playlist_delete", () => ncm.call("playlist_delete", { id }), mapWriteActionSummary),
   );
 
   server.registerTool(
@@ -193,7 +232,11 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, name }) =>
-      call("netease_playlist_name_update", () => ncm.call("playlist_name_update", { id, name })),
+      call(
+        "netease_playlist_name_update",
+        () => ncm.call("playlist_name_update", { id, name }),
+        mapWriteActionSummary,
+      ),
   );
 
   server.registerTool(
@@ -207,7 +250,11 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, desc }) =>
-      call("netease_playlist_desc_update", () => ncm.call("playlist_desc_update", { id, desc })),
+      call(
+        "netease_playlist_desc_update",
+        () => ncm.call("playlist_desc_update", { id, desc }),
+        mapWriteActionSummary,
+      ),
   );
 
   server.registerTool(
@@ -225,7 +272,11 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, tags }) =>
-      call("netease_playlist_tags_update", () => ncm.call("playlist_tags_update", { id, tags })),
+      call(
+        "netease_playlist_tags_update",
+        () => ncm.call("playlist_tags_update", { id, tags }),
+        mapWriteActionSummary,
+      ),
   );
 
   server.registerTool(
@@ -245,7 +296,11 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, name, desc, tags }) =>
-      call("netease_playlist_update", () => ncm.call("playlist_update", { id, name, desc, tags })),
+      call(
+        "netease_playlist_update",
+        () => ncm.call("playlist_update", { id, name, desc, tags }),
+        mapWriteActionSummary,
+      ),
   );
 
   server.registerTool(
@@ -259,8 +314,10 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, subscribe }) =>
-      call("netease_playlist_subscribe", () =>
-        ncm.call("playlist_subscribe", { id, t: subscribe ? 1 : 0 }),
+      call(
+        "netease_playlist_subscribe",
+        () => ncm.call("playlist_subscribe", { id, t: subscribe ? 1 : 0 }),
+        mapWriteActionSummary,
       ),
   );
 
@@ -278,8 +335,10 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ pid, tracks }) =>
-      call("netease_playlist_track_add", () =>
-        ncm.call("playlist_tracks", { op: "add", pid, tracks }),
+      call(
+        "netease_playlist_track_add",
+        () => ncm.call("playlist_tracks", { op: "add", pid, tracks }),
+        mapWriteActionSummary,
       ),
   );
 
@@ -297,8 +356,10 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ pid, tracks }) =>
-      call("netease_playlist_track_delete", () =>
-        ncm.call("playlist_tracks", { op: "del", pid, tracks }),
+      call(
+        "netease_playlist_track_delete",
+        () => ncm.call("playlist_tracks", { op: "del", pid, tracks }),
+        mapWriteActionSummary,
       ),
   );
 
@@ -319,7 +380,11 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ time, limit }) =>
-      call("netease_playlist_mylike", () => ncm.call("playlist_mylike", { time, limit })),
+      call(
+        "netease_playlist_mylike",
+        () => ncm.call("playlist_mylike", { time, limit }),
+        mapPlaylistMyLikeSummary,
+      ),
   );
 
   server.registerTool(
@@ -415,7 +480,11 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ cat, order, limit, offset }) =>
-      call("netease_top_playlist", () => ncm.call("top_playlist", { cat, order, limit, offset })),
+      call(
+        "netease_top_playlist",
+        () => ncm.call("top_playlist", { cat, order, limit, offset }),
+        mapTopPlaylistSummary,
+      ),
   );
 
   server.registerTool(
@@ -433,8 +502,10 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ cat, before, limit }) =>
-      call("netease_top_playlist_highquality", () =>
-        ncm.call("top_playlist_highquality", { cat, before, limit }),
+      call(
+        "netease_top_playlist_highquality",
+        () => ncm.call("top_playlist_highquality", { cat, before, limit }),
+        mapTopPlaylistSummary,
       ),
   );
 
@@ -445,7 +516,7 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_toplist", () => ncm.call("toplist")),
+    async () => call("netease_toplist", () => ncm.call("toplist"), mapToplistSummary),
   );
 
   server.registerTool(
@@ -455,6 +526,7 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_toplist_detail", () => ncm.call("toplist_detail")),
+    async () =>
+      call("netease_toplist_detail", () => ncm.call("toplist_detail"), mapToplistDetailSummary),
   );
 };

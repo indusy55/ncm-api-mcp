@@ -4,6 +4,14 @@ import {
   readOnlyAnnotations,
   writeAnnotations,
 } from "../shared/context.js";
+import {
+  mapLikelistSummary,
+  mapPlaylistListSummary,
+  mapRecommendResourceSummary,
+  mapRecommendSongsSummary,
+  mapSongDetailSummary,
+  mapSongListSummary,
+} from "../mappers/summary.js";
 
 export const registerSongTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
@@ -17,7 +25,8 @@ export const registerSongTools: ToolRegistrar = (server, { ncm, call }) => {
           .describe("Comma-separated song IDs, e.g. '33894312,33894313'"),
       },
     },
-    async ({ ids }) => call("netease_song_detail", () => ncm.call("song_detail", { ids })),
+    async ({ ids }) =>
+      call("netease_song_detail", () => ncm.call("song_detail", { ids }), mapSongDetailSummary),
   );
 
   server.registerTool(
@@ -142,7 +151,7 @@ export const registerSongTools: ToolRegistrar = (server, { ncm, call }) => {
       },
     },
     async ({ id, limit, offset }) =>
-      call("netease_simi_song", () => ncm.call("simi_song", { id, limit, offset })),
+      call("netease_simi_song", () => ncm.call("simi_song", { id, limit, offset }), mapSongListSummary),
   );
 
   server.registerTool(
@@ -399,7 +408,7 @@ export const registerSongTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_personal_fm", () => ncm.call("personal_fm")),
+    async () => call("netease_personal_fm", () => ncm.call("personal_fm"), mapSongListSummary),
   );
 
   server.registerTool(
@@ -425,7 +434,7 @@ export const registerSongTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_likelist", () => ncm.call("likelist")),
+    async () => call("netease_likelist", () => ncm.call("likelist"), mapLikelistSummary),
   );
 
   server.registerTool(
@@ -435,7 +444,8 @@ export const registerSongTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_recommend_songs", () => ncm.call("recommend_songs")),
+    async () =>
+      call("netease_recommend_songs", () => ncm.call("recommend_songs"), mapRecommendSongsSummary),
   );
 
   server.registerTool(
@@ -445,7 +455,12 @@ export const registerSongTools: ToolRegistrar = (server, { ncm, call }) => {
       annotations: readOnlyAnnotations,
       inputSchema: {},
     },
-    async () => call("netease_recommend_resource", () => ncm.call("recommend_resource")),
+    async () =>
+      call(
+        "netease_recommend_resource",
+        () => ncm.call("recommend_resource"),
+        mapRecommendResourceSummary,
+      ),
   );
 
   server.registerTool(
@@ -457,6 +472,7 @@ export const registerSongTools: ToolRegistrar = (server, { ncm, call }) => {
         id: z.union([z.number(), z.string()]).describe("Related resource ID"),
       },
     },
-    async ({ id }) => call("netease_related_playlist", () => ncm.call("related_playlist", { id })),
+    async ({ id }) =>
+      call("netease_related_playlist", () => ncm.call("related_playlist", { id }), mapPlaylistListSummary),
   );
 };
