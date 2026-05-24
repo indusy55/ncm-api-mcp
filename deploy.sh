@@ -11,6 +11,7 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 LOG_FILE="${PROJECT_ROOT}/data/deploy_${TIMESTAMP}.log"
 COMPOSE_FILE="${PROJECT_ROOT}/docker-compose.yml"
 SKIP_BUILD=false
+PULL_BASE=false
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -34,9 +35,10 @@ trap cleanup EXIT
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --skip-build) SKIP_BUILD=true; shift ;;
+        --pull-base) PULL_BASE=true; shift ;;
         --help|-h)
             cat <<'EOF'
-用法: ./deploy.sh [--skip-build]
+用法: ./deploy.sh [--skip-build] [--pull-base]
 
 说明:
   1. 拉取当前分支最新代码
@@ -45,6 +47,7 @@ while [[ $# -gt 0 ]]; do
 
 选项:
   --skip-build   跳过镜像构建，直接执行 docker compose up -d
+  --pull-base    构建前主动拉取最新基础镜像
 EOF
             exit 0
             ;;
@@ -93,7 +96,11 @@ build_images() {
     fi
 
     log_info "构建 Docker 镜像..."
-    $COMPOSE_CMD build --pull
+    if [ "$PULL_BASE" = true ]; then
+        $COMPOSE_CMD build --pull
+    else
+        $COMPOSE_CMD build
+    fi
     log_ok "镜像构建完成"
 }
 
