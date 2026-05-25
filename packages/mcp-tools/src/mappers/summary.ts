@@ -391,11 +391,13 @@ export function mapUserSubcountSummary(body: Record<string, unknown>) {
 export function mapUserRecordSummary(body: Record<string, unknown>) {
   const weekData = asArray(body.weekData).map(compactUserRecordItem);
   const allData = asArray(body.allData).map(compactUserRecordItem);
+  const monthData = asArray(body.monthData).map(compactUserRecordItem);
 
   return {
     code: body.code,
     weekData,
     allData,
+    ...(monthData.length > 0 ? { monthData } : {}),
   };
 }
 

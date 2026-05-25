@@ -1,9 +1,20 @@
 import { z } from "zod";
 import type { ToolRegistrar } from "../shared/context.js";
-import { readOnlyAnnotations } from "../shared/context.js";
+import {
+  readOnlyAnnotations,
+  writeAnnotations,
+} from "../shared/context.js";
 
 const commentType = z.enum(["0", "1", "2", "3", "4", "5", "6"]);
 const commentTarget = z.enum(["playlist", "music", "album", "mv", "video"]);
+
+const targetTypeMap: Record<string, string> = {
+  music: "0",
+  mv: "1",
+  playlist: "2",
+  album: "3",
+  video: "5",
+};
 
 export const registerCommentTools: ToolRegistrar = (server, { ncm, call }) => {
   server.registerTool(
@@ -77,5 +88,43 @@ export const registerCommentTools: ToolRegistrar = (server, { ncm, call }) => {
       call("netease_comment_floor", () =>
         ncm.call("comment_floor", { id, parentCommentId, type, limit, time }),
       ),
+  );
+
+  server.registerTool(
+    "netease_comment_operate",
+    {
+      description: "comment operate [write]",
+      annotations: writeAnnotations,
+      inputSchema: {
+        mode: z.enum(["add", "delete", "reply", "like"]),
+        target: commentTarget,
+        id: z.union([z.number(), z.string()]),
+        type: commentType.optional(),
+        commentId: z.union([z.number(), z.string()]).optional(),
+        content: z.string().optional(),
+        like: z.boolean().default(true),
+      },
+    },
+    async ({ mode, target, id, type, commentId, content, like }) => {
+      const t = targetTypeMap[target];
+      switch (mode) {
+        case "add":
+          return call("netease_comment_operate", () =>
+            ncm.call("comment", { t: 1, type: type ?? t, id, content }),
+          );
+        case "delete":
+          return call("netease_comment_operate", () =>
+            ncm.call("comment", { t: 0, type: type ?? t, id, commentId }),
+          );
+        case "reply":
+          return call("netease_comment_operate", () =>
+            ncm.call("comment", { t: 2, type: type ?? t, id, content, commentId }),
+          );
+        case "like":
+          return call("netease_comment_operate", () =>
+            ncm.call("comment_like", { id, type: type ?? t, commentId, t: like ? 1 : 2 }),
+          );
+      }
+    },
   );
 };

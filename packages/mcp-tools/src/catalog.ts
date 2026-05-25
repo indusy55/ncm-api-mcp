@@ -48,6 +48,8 @@ export const allToolDefinitions: ToolDefinition[] = [
   { name: "netease_playlist_order_update", module: "playlist", moduleLabel: "歌单", action: "order_update", actionLabel: "更新排序", description: "更新歌单排序", audience: "user", destructive: true },
   { name: "netease_playlist_update_playcount", module: "playlist", moduleLabel: "歌单", action: "update_playcount", actionLabel: "更新播放量", description: "更新歌单播放量", audience: "user", destructive: true },
 
+  { name: "netease_playlist_merge", module: "playlist", moduleLabel: "歌单", action: "merge", actionLabel: "合并歌单", description: "将多个歌单合并为一个新歌单，支持去重和排序", audience: "user", destructive: true },
+
   { name: "netease_album_read", module: "album", moduleLabel: "专辑", action: "read", actionLabel: "专辑读取", description: "读取专辑详情、榜单、列表、权限、销量和收藏列表", audience: "both", destructive: false },
   { name: "netease_album_sub", module: "album", moduleLabel: "专辑", action: "subscribe", actionLabel: "收藏专辑", description: "收藏或取消收藏专辑", audience: "user", destructive: true },
 
@@ -64,6 +66,7 @@ export const allToolDefinitions: ToolDefinition[] = [
 
   { name: "netease_comment_list", module: "comments", moduleLabel: "评论", action: "list", actionLabel: "评论列表", description: "查看评论列表或热评", audience: "both", destructive: false },
   { name: "netease_comment_floor", module: "comments", moduleLabel: "评论", action: "floor", actionLabel: "楼层评论", description: "查看楼层评论详情", audience: "both", destructive: false },
+  { name: "netease_comment_operate", module: "comments", moduleLabel: "评论", action: "operate", actionLabel: "评论操作", description: "发表、删除、回复、点赞评论", audience: "user", destructive: true },
 ];
 
 export const toolDefinitionMap = new Map(

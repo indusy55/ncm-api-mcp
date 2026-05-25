@@ -39,7 +39,7 @@ const playlistDiscoverMode = z.enum([
   "toplist_detail",
 ]);
 
-export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
+export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call, neteaseUid }) => {
   server.registerTool(
     "netease_playlist_read",
     {
@@ -446,4 +446,131 @@ export const registerPlaylistTools: ToolRegistrar = (server, { ncm, call }) => {
       ),
   );
 
+  server.registerTool(
+    "netease_playlist_merge",
+    {
+      description: "playlist merge [write]",
+      annotations: writeAnnotations,
+      inputSchema: {
+        source_ids: z.string().min(1),
+        name: z.string().min(1).max(200),
+        dedup: z.boolean().default(true),
+        keep_sources: z.boolean().default(false),
+        sort_by: z.enum(["popularity", "time", "none"]).default("none"),
+      },
+    },
+    async ({ source_ids, name, dedup, keep_sources, sort_by }) => {
+      if (!neteaseUid) {
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({ error: "未绑定网易云账号，此功能需要登录" }) }],
+          isError: true,
+        };
+      }
+
+      try {
+        const sourceIdList = source_ids.split(",").map((s) => s.trim()).filter(Boolean);
+        if (sourceIdList.length < 2) {
+          return {
+            content: [{ type: "text" as const, text: JSON.stringify({ error: "至少需要两个源歌单" }) }],
+            isError: true,
+          };
+        }
+
+        // 1. Read all source playlists' tracks in parallel
+        const trackResults = await Promise.all(
+          sourceIdList.map((id) => ncm.call("playlist_track_all", { id: Number(id) })),
+        );
+
+        // 2. Merge and optional dedup
+        const seenIds = new Set<number>();
+        const allTracks: { id: number; name: string }[] = [];
+
+        for (const result of trackResults) {
+          const songs = (result.body?.songs ?? []) as Array<Record<string, unknown>>;
+          for (const song of songs) {
+            const songId = Number(song.id);
+            if (dedup && seenIds.has(songId)) continue;
+            seenIds.add(songId);
+            allTracks.push({ id: songId, name: String(song.name ?? "") });
+          }
+        }
+
+        if (allTracks.length === 0) {
+          return {
+            content: [{ type: "text" as const, text: JSON.stringify({ error: "源歌单中没有歌曲" }) }],
+            isError: true,
+          };
+        }
+
+        // 3. Sort (time order not available without additional data, only track by input order)
+        if (sort_by === "popularity") {
+          // Query song detail to get popularity
+          const idChunks: number[][] = [];
+          for (let i = 0; i < allTracks.length; i += 100) {
+            idChunks.push(allTracks.slice(i, i + 100).map((t) => t.id));
+          }
+          const popResults = await Promise.all(
+            idChunks.map((chunk) => ncm.call("song_detail", { ids: chunk.join(",") })),
+          );
+
+          const popMap = new Map<number, number>();
+          for (const result of popResults) {
+            const songs = (result.body?.songs ?? []) as Array<Record<string, unknown>>;
+            for (const song of songs) {
+              popMap.set(Number(song.id), Number((song as any).pop ?? 0));
+            }
+          }
+          allTracks.sort((a, b) => (popMap.get(b.id) ?? 0) - (popMap.get(a.id) ?? 0));
+        }
+
+        // 4. Create new playlist
+        const createResult = await ncm.call("playlist_create", { name });
+        const body = createResult.body as Record<string, unknown> | undefined;
+        const playlistId = body?.id as number | undefined;
+        if (!playlistId) {
+          return {
+            content: [{ type: "text" as const, text: JSON.stringify({ error: "创建歌单失败" }) }],
+            isError: true,
+          };
+        }
+
+        // 5. Batch add tracks (100 per call)
+        const trackIds = allTracks.map((t) => t.id);
+        for (let i = 0; i < trackIds.length; i += 100) {
+          const batch = trackIds.slice(i, i + 100).join(",");
+          await ncm.call("playlist_tracks", { op: "add", pid: playlistId, tracks: batch });
+        }
+
+        // 6. Optionally delete source playlists
+        if (!keep_sources) {
+          await Promise.all(
+            sourceIdList.map((id) => ncm.call("playlist_delete", { id: Number(id) })),
+          );
+        }
+
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                success: true,
+                playlist_id: playlistId,
+                name,
+                track_count: trackIds.length,
+                source_count: sourceIdList.length,
+                dedup,
+                source_deleted: !keep_sources,
+              }),
+            },
+          ],
+        };
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "未知错误";
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({ error: msg }) }],
+          isError: true,
+        };
+      }
+    },
+  );
 };
