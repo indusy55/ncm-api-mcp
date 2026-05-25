@@ -13,10 +13,7 @@ export async function createMcpApp() {
   const env = getEnv();
   const db = createDbClient(env.DATABASE_URL);
 
-  await migrate(db, { migrationsFolder }).catch((err) => {
-    console.error("[DB] Migration failed:", err);
-    throw err;
-  });
+  migrate(db, { migrationsFolder });
 
   const redis = createRedisClient(env.REDIS_URL);
 
