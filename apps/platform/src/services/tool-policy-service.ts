@@ -200,7 +200,8 @@ export async function getUserToolGroups(db: DbClient, userId: string): Promise<T
           canManage: adminEnabled,
         },
       } satisfies ToolPolicyItem;
-    });
+    })
+    .filter((item) => item.user.visible);
 
   return buildGroups(items);
 }

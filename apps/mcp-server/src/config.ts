@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-  DATABASE_URL: z.string().default("./data/mcp-server.db"),
+  DATABASE_URL: z.string().default("./data/platform.db"),
   REDIS_URL: z.string().default("redis://localhost:6379"),
   MCP_PORT: z.coerce.number().default(3002),
   COOKIE_ENCRYPTION_KEY: z.string().length(64),
